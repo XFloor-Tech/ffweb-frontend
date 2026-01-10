@@ -1,373 +1,144 @@
-/**
- * Mock API Server for File Processing API
- * Based on Postman Collection
- *
- * Endpoints:
- * - POST   /api/upload
- * - GET    /api/task/:id
- * - GET    /api/events/:id (SSE)
- * - GET    /api/download/:id
- * - DELETE /api/task/:id
- * - POST   /api/upload/chunk
- * - POST   /api/upload/complete
- */
-
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = 3000;
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// In-memory storage
-const tasks = new Map();
-const chunkedUploads = new Map();
+// In-memory data store
+let db = {
+  users: [
+    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' },
+  ],
+  posts: [
+    { id: 1, title: 'First Post', content: 'Hello World!', authorId: 1 },
+    { id: 2, title: 'Second Post', content: 'Mock backend is ready', authorId: 2 },
+  ],
+  todos: [
+    { id: 1, text: 'Learn React', completed: false },
+    { id: 2, text: 'Build awesome app', completed: true },
+  ],
+  products: [
+    { id: 1, name: 'Product A', price: 29.99, category: 'electronics' },
+    { id: 2, name: 'Product B', price: 49.99, category: 'books' },
+  ],
+};
 
-// Multer configuration for file uploads
-const upload = multer({ storage: multer.memoryStorage() });
+let nextIds = { users: 3, posts: 3, todos: 3, products: 3 };
 
-/**
- * Simulate file processing with progress updates
- */
-function simulateProcessing(taskId) {
-  let progress = 0;
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
-  const interval = setInterval(() => {
-    progress += Math.random() * 20 + 10;
-
-    const task = tasks.get(taskId);
-    if (!task || task.status === 'cancelled') {
-      clearInterval(interval);
-      return;
-    }
-
-    task.progress = Math.min(100, Math.round(progress));
-    task.updated_at = new Date().toISOString();
-
-    if (task.progress >= 100) {
-      task.status = 'completed';
-      task.fileReady = true;
-      clearInterval(interval);
-    } else {
-      task.status = 'processing';
-    }
-
-    tasks.set(taskId, task);
-  }, 1500);
-}
-
-// ==================== File Operations ====================
-
-/**
- * POST /api/upload
- * Upload a file and receive a task_id for tracking
- */
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file provided' });
-  }
-
-  const taskId = uuidv4();
-  const task = {
-    task_id: taskId,
-    status: 'queued',
-    progress: 0,
-    filename: req.file.originalname,
-    size: req.file.size,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    fileData: req.file.buffer,
-    fileReady: false
-  };
-
-  tasks.set(taskId, task);
-
-  // Start processing simulation
-  setTimeout(() => simulateProcessing(taskId), 500);
-
-  res.status(201).json({
-    task_id: taskId,
-    status: 'queued',
-    message: 'File uploaded successfully'
-  });
+// Simulate delay (default 2s, override with ?delay=ms or ?delay=0 for instant)
+app.use((req, res, next) => {
+  const delay = req.query.delay !== undefined ? parseInt(req.query.delay) : 2000;
+  setTimeout(next, delay);
 });
 
-/**
- * GET /api/task/:id
- * Get the current status of a processing task
- */
-app.get('/api/task/:id', (req, res) => {
-  const task = tasks.get(req.params.id);
+// Generic CRUD helpers
+const getAll = (resource) => (req, res) => res.json(db[resource]);
+const getById = (resource) => (req, res) => {
+  const item = db[resource].find(x => x.id === parseInt(req.params.id));
+  item ? res.json(item) : res.status(404).json({ error: 'Not found' });
+};
+const create = (resource) => (req, res) => {
+  const item = { id: nextIds[resource]++, ...req.body };
+  db[resource].push(item);
+  res.status(201).json(item);
+};
+const update = (resource) => (req, res) => {
+  const idx = db[resource].findIndex(x => x.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  db[resource][idx] = { ...db[resource][idx], ...req.body };
+  res.json(db[resource][idx]);
+};
+const remove = (resource) => (req, res) => {
+  const idx = db[resource].findIndex(x => x.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  db[resource].splice(idx, 1);
+  res.status(204).send();
+};
 
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  res.json({
-    task_id: task.task_id,
-    status: task.status,
-    progress: task.progress,
-    filename: task.filename,
-    created_at: task.created_at,
-    updated_at: task.updated_at,
-    error: task.error || null
-  });
+// Resources - apply CRUD to each
+['users', 'posts', 'todos', 'products'].forEach(resource => {
+  app.get(`/api/${resource}`, getAll(resource));
+  app.get(`/api/${resource}/:id`, getById(resource));
+  app.post(`/api/${resource}`, create(resource));
+  app.put(`/api/${resource}/:id`, update(resource));
+  app.delete(`/api/${resource}/:id`, remove(resource));
 });
 
-/**
- * GET /api/events/:id
- * Server-Sent Events stream for real-time progress updates
- */
-app.get('/api/events/:id', (req, res) => {
-  const task = tasks.get(req.params.id);
-
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
+// Auth endpoints (mock)
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  const user = db.users.find(u => u.email === email);
+  if (user) {
+    res.json({ token: 'mock-jwt-token', user });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
   }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-
-  const sendEvent = (data) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
-
-  // Send initial state
-  sendEvent({
-    type: 'progress',
-    task_id: task.task_id,
-    status: task.status,
-    progress: task.progress,
-    message: `Processing: ${task.progress}%`
-  });
-
-  // Send updates every second
-  const interval = setInterval(() => {
-    const currentTask = tasks.get(req.params.id);
-
-    if (!currentTask) {
-      clearInterval(interval);
-      sendEvent({ type: 'error', message: 'Task not found' });
-      res.end();
-      return;
-    }
-
-    sendEvent({
-      type: 'progress',
-      task_id: currentTask.task_id,
-      status: currentTask.status,
-      progress: currentTask.progress,
-      message: `Processing: ${currentTask.progress}%`
-    });
-
-    if (currentTask.status === 'completed') {
-      clearInterval(interval);
-      sendEvent({ type: 'complete', task_id: currentTask.task_id });
-      res.end();
-    } else if (currentTask.status === 'failed' || currentTask.status === 'cancelled') {
-      clearInterval(interval);
-      sendEvent({ type: 'close', task_id: currentTask.task_id });
-      res.end();
-    }
-  }, 1000);
-
-  req.on('close', () => {
-    clearInterval(interval);
-  });
 });
 
-/**
- * GET /api/download/:id
- * Download the processed file
- */
-app.get('/api/download/:id', (req, res) => {
-  const task = tasks.get(req.params.id);
+app.post('/api/auth/logout', (req, res) => res.json({ message: 'Logged out' }));
 
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  if (task.status !== 'completed') {
-    return res.status(400).json({ error: 'File processing not completed' });
-  }
-
-  if (!task.fileReady) {
-    return res.status(410).json({ error: 'File no longer available' });
-  }
-
-  res.setHeader('Content-Type', 'application/octet-stream');
-  res.setHeader('Content-Disposition', `attachment; filename="processed_${task.filename}"`);
-  res.send(task.fileData);
+app.get('/api/auth/me', (req, res) => {
+  res.json(db.users[0]);
 });
 
-/**
- * DELETE /api/task/:id
- * Cancel a processing task
- */
-app.delete('/api/task/:id', (req, res) => {
-  const task = tasks.get(req.params.id);
-
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  if (task.status === 'completed') {
-    return res.status(400).json({ error: 'Cannot cancel completed task' });
-  }
-
-  task.status = 'cancelled';
-  task.updated_at = new Date().toISOString();
-  tasks.set(req.params.id, task);
-
-  res.json({
-    task_id: req.params.id,
-    status: 'cancelled',
-    message: 'Task cancelled successfully'
-  });
+// Search endpoint
+app.get('/api/search/:resource', (req, res) => {
+  const { resource } = req.params;
+  const { q } = req.query;
+  if (!db[resource]) return res.status(404).json({ error: 'Resource not found' });
+  const results = db[resource].filter(item =>
+    Object.values(item).some(v => String(v).toLowerCase().includes(q?.toLowerCase() || ''))
+  );
+  res.json(results);
 });
 
-// ==================== Chunked Upload (>1GB files) ====================
-
-/**
- * POST /api/upload/chunk
- * Upload a file chunk (for files larger than 1GB)
- */
-app.post('/api/upload/chunk', upload.single('chunk'), (req, res) => {
-  const { uploadId, chunkIndex, totalChunks, filename } = req.body;
-
-  if (!uploadId || chunkIndex === undefined || !totalChunks || !req.file) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const index = parseInt(chunkIndex);
-  const total = parseInt(totalChunks);
-
-  if (!chunkedUploads.has(uploadId)) {
-    chunkedUploads.set(uploadId, {
-      id: uploadId,
-      filename: filename || 'unknown',
-      totalChunks: total,
-      receivedChunks: new Map(),
-      created_at: new Date().toISOString()
-    });
-  }
-
-  const uploadSession = chunkedUploads.get(uploadId);
-  uploadSession.receivedChunks.set(index, req.file.buffer);
-
-  res.json({
-    uploadId,
-    chunkIndex: index,
-    received: uploadSession.receivedChunks.size,
-    totalChunks: total,
-    message: `Chunk ${index + 1} of ${total} uploaded`
-  });
+// Reset data
+app.post('/api/reset', (req, res) => {
+  db.users = [
+    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' },
+  ];
+  db.posts = [
+    { id: 1, title: 'First Post', content: 'Hello World!', authorId: 1 },
+    { id: 2, title: 'Second Post', content: 'Mock backend is ready', authorId: 2 },
+  ];
+  db.todos = [
+    { id: 1, text: 'Learn React', completed: false },
+    { id: 2, text: 'Build awesome app', completed: true },
+  ];
+  db.products = [
+    { id: 1, name: 'Product A', price: 29.99, category: 'electronics' },
+    { id: 2, name: 'Product B', price: 49.99, category: 'books' },
+  ];
+  nextIds = { users: 3, posts: 3, todos: 3, products: 3 };
+  res.json({ message: 'Data reset to initial state' });
 });
 
-/**
- * POST /api/upload/complete
- * Finalize chunked upload and get task_id
- */
-app.post('/api/upload/complete', (req, res) => {
-  const { uploadId, filename, totalChunks } = req.body;
+// 404 handler
+app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
 
-  if (!uploadId) {
-    return res.status(400).json({ error: 'uploadId is required' });
-  }
-
-  const uploadSession = chunkedUploads.get(uploadId);
-
-  if (!uploadSession) {
-    return res.status(404).json({ error: 'Upload session not found' });
-  }
-
-  const expectedChunks = parseInt(totalChunks) || uploadSession.totalChunks;
-
-  if (uploadSession.receivedChunks.size !== expectedChunks) {
-    return res.status(400).json({
-      error: 'Incomplete upload',
-      received: uploadSession.receivedChunks.size,
-      expected: expectedChunks
-    });
-  }
-
-  // Combine all chunks
-  const buffers = [];
-  for (let i = 0; i < expectedChunks; i++) {
-    buffers.push(uploadSession.receivedChunks.get(i));
-  }
-  const combinedBuffer = Buffer.concat(buffers);
-
-  // Create processing task
-  const taskId = uuidv4();
-  const task = {
-    task_id: taskId,
-    status: 'queued',
-    progress: 0,
-    filename: filename || uploadSession.filename,
-    size: combinedBuffer.length,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    fileData: combinedBuffer,
-    fileReady: false
-  };
-
-  tasks.set(taskId, task);
-  chunkedUploads.delete(uploadId);
-
-  // Start processing
-  setTimeout(() => simulateProcessing(taskId), 500);
-
-  res.status(201).json({
-    task_id: taskId,
-    status: 'queued',
-    filename: task.filename,
-    size: task.size,
-    message: 'Chunked upload completed, processing started'
-  });
-});
-
-// ==================== Health Check ====================
-
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    stats: {
-      active_tasks: tasks.size,
-      chunked_uploads: chunkedUploads.size
-    }
-  });
-});
-
-// ==================== Start Server ====================
-
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`\n🚀 Mock File Processing API Server`);
-  console.log(`📍 Running at: http://localhost:${PORT}`);
-  console.log(`\n📋 Endpoints:\n`);
-
-  console.log(`  File Operations:`);
-  console.log(`    POST   /api/upload`);
-  console.log(`    GET    /api/task/:id`);
-  console.log(`    GET    /api/events/:id`);
-  console.log(`    GET    /api/download/:id`);
-  console.log(`    DELETE /api/task/:id`);
-
-  console.log(`\n  Chunked Upload:`);
-  console.log(`    POST   /api/upload/chunk`);
-  console.log(`    POST   /api/upload/complete`);
-
-  console.log(`\n  Health:`);
-  console.log(`    GET    /health\n`);
+  console.log(`Mock server running on http://localhost:${PORT}`);
+  console.log(`\nAvailable endpoints:`);
+  console.log(`  GET    /api/users`);
+  console.log(`  GET    /api/users/:id`);
+  console.log(`  POST   /api/users`);
+  console.log(`  PUT    /api/users/:id`);
+  console.log(`  DELETE /api/users/:id`);
+  console.log(`  (Same pattern for: posts, todos, products)`);
+  console.log(`\nAuth endpoints:`);
+  console.log(`  POST   /api/auth/login`);
+  console.log(`  POST   /api/auth/logout`);
+  console.log(`  GET    /api/auth/me`);
+  console.log(`\nUtilities:`);
+  console.log(`  GET    /health`);
+  console.log(`  GET    /api/search/:resource?q=query`);
+  console.log(`  POST   /api/reset`);
+  console.log(`\nAdd ?delay=1000 to any request to simulate network delay`);
 });
-
-module.exports = app;
