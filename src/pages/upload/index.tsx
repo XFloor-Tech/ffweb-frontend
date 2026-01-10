@@ -14,7 +14,6 @@ const UploadPage: FC<Props> = () => {
       <section className="min-h-screen w-full 4xl:max-w-[960px]">
         <FileUpload />
       </section>
-
       <section className="hidden min-h-screen w-full xl:block xl:max-w-[432px]">
         <UploadSettings />
       </section>
