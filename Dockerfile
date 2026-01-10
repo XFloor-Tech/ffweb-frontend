@@ -1,17 +1,9 @@
-FROM golang:1.22-alpine AS builder
-
-RUN apk add --no-cache ffmpeg
-
+FROM node:20-alpine AS build
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-
+COPY package*.json ./
+RUN npm ci
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app
+RUN npm run build
 
-FROM alpine:latest
-RUN apk add --no-cache ffmpeg
-WORKDIR /app
-COPY --from=builder /app/app .
-EXPOSE 8080
-CMD ["./app"]
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
