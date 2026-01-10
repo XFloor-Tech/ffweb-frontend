@@ -1,8 +1,5 @@
-// components/conversion-settings.tsx
-import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Accordion,
@@ -10,9 +7,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Settings2, FileAudio, Sliders, Scissors, Terminal, RotateCcw } from 'lucide-react';
+import { Settings2, FileAudio, Sliders, Scissors, RotateCcw } from 'lucide-react';
 
-// Import sub-components
 import { BasicSettings } from './basic-settings';
 import { AdvancedSettings } from './advanced-settings';
 import { TrimmingSettings } from './trimming-settings';
@@ -64,9 +60,6 @@ export function ConversionSettings() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Basic Audio Settings</h3>
-                  <p className="text-sm text-muted-foreground font-normal">
-                    Codec, bitrate, sample rate, and channel configuration
-                  </p>
                 </div>
               </div>
             </AccordionTrigger>
@@ -75,8 +68,6 @@ export function ConversionSettings() {
               <BasicSettings />
             </AccordionContent>
           </AccordionItem>
-          
-          {/* Advanced Settings Accordion Item */}
           <AccordionItem value="advanced" className="border rounded-lg px-4">
             <AccordionTrigger className="py-4 hover:no-underline">
               <div className="flex items-center gap-3 text-left">
@@ -85,9 +76,6 @@ export function ConversionSettings() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Advanced Audio Processing</h3>
-                  <p className="text-sm text-muted-foreground font-normal">
-                    Bit depth, metadata, gain, and normalization settings
-                  </p>
                 </div>
               </div>
             </AccordionTrigger>
@@ -96,8 +84,6 @@ export function ConversionSettings() {
               <AdvancedSettings />
             </AccordionContent>
           </AccordionItem>
-          
-          {/* Trimming Settings Accordion Item */}
           <AccordionItem value="trimming" className="border rounded-lg px-4">
             <AccordionTrigger className="py-4 hover:no-underline">
               <div className="flex items-center gap-3 text-left">
@@ -106,9 +92,6 @@ export function ConversionSettings() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Editing & Trimming</h3>
-                  <p className="text-sm text-muted-foreground font-normal">
-                    Cut and trim specific portions of your audio
-                  </p>
                 </div>
               </div>
             </AccordionTrigger>
@@ -118,8 +101,6 @@ export function ConversionSettings() {
             </AccordionContent>
           </AccordionItem>          
         </Accordion>
-        
-        {/* Summary Section */}
         <div className="mt-8 pt-6 border-t">
           <div className="flex items-center justify-between">
             <div>
