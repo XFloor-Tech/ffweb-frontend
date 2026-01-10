@@ -1,4 +1,4 @@
-import type { ChangeEvent, DragEvent, FC } from "react";
+import type { ChangeEvent, DragEvent, FC, ReactNode } from "react";
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ import { FileDown } from "lucide-react";
 type Props = {
   className?: string;
   onFileSelect?: (file: File) => void;
+  children?: ReactNode;
 };
 
 const ALLOWED_EXTENSIONS = new Set([
@@ -28,9 +29,11 @@ const isAllowedFile = (file: File) => {
   return Boolean(extension && ALLOWED_EXTENSIONS.has(extension));
 };
 
-const FileDropzone: FC<Props> = ({ className, onFileSelect }) => {
+const FileDropzone: FC<Props> = ({ className, onFileSelect, children }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [file, setFile] = useState<File | null>(null);
 
   const handleClick = () => {
     inputRef.current?.click();
@@ -41,6 +44,7 @@ const FileDropzone: FC<Props> = ({ className, onFileSelect }) => {
 
     if (file && isAllowedFile(file)) {
       onFileSelect?.(file);
+      setFile(file);
     }
   };
 
@@ -72,8 +76,9 @@ const FileDropzone: FC<Props> = ({ className, onFileSelect }) => {
   return (
     <div
       className={cn(
-        "flex h-[580px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[12px] border-2 border-dashed bg-gray-800 text-center text-white",
-        isDragging ? "border-primary" : "border-gray-600",
+        "flex h-145 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 px-7 py-6 text-center text-white",
+        isDragging || file ? "border-primary" : "border-gray-600",
+        file ? "bg-transparent" : "border-dashed bg-gray-800",
         className,
       )}
       onClick={handleClick}
@@ -84,21 +89,27 @@ const FileDropzone: FC<Props> = ({ className, onFileSelect }) => {
       role="button"
       tabIndex={0}
     >
-      <input
-        ref={inputRef}
-        accept=".mp3,.wav,.flac,.aac,.m4a,.ogg,.mp4,.mov,.avi,.mkv,.webm"
-        className="hidden"
-        type="file"
-        onChange={handleChange}
-      />
-      <FileDown size={48} className="text-primary" strokeWidth={1} />
-      <div className="flex flex-col justify-center gap-1">
-        <span className="text-h4">Drag & Drop File Here</span>
-        <span className="text-monospace">or click to select</span>
-      </div>
-      <span className="text-text text-gray-300">
-        MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, AVI, MKV, WebM
-      </span>
+      {!children && (
+        <>
+          <input
+            ref={inputRef}
+            accept=".mp3,.wav,.flac,.aac,.m4a,.ogg,.mp4,.mov,.avi,.mkv,.webm"
+            className="hidden"
+            type="file"
+            onChange={handleChange}
+          />
+          <FileDown size={48} className="text-primary" strokeWidth={1} />
+          <div className="flex flex-col justify-center gap-1">
+            <span className="text-h4">Drag & Drop File Here</span>
+            <span className="text-monospace">or click to select</span>
+          </div>
+          <span className="text-text text-gray-300">
+            MP3, WAV, FLAC, AAC, M4A, OGG, MP4, MOV, AVI, MKV, WebM
+          </span>
+        </>
+      )}
+
+      {children}
     </div>
   );
 };
