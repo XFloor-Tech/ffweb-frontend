@@ -22,4 +22,22 @@ const formatFileSize = (bytes: number) => {
   return `${gb.toFixed(1)} GB`;
 };
 
-export { formatFileSize, getFileFormat };
+const getQualityFromBitrate = (bitrate: string) => {
+  const numeric = parseInt(bitrate.replace("k", ""), 10);
+
+  if (Number.isNaN(numeric)) {
+    return "medium";
+  }
+
+  if (numeric <= 128) {
+    return "low";
+  }
+
+  if (numeric <= 192) {
+    return "medium";
+  }
+
+  return "high";
+};
+
+export { formatFileSize, getFileFormat, getQualityFromBitrate };

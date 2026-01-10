@@ -7,20 +7,43 @@ const uploadQueryKeys = {
   upload: () => ["upload"],
 } as const;
 
+type UploadOptions = {
+  bitrate: string;
+  sampleRate: string;
+  channels: string;
+  bitDepth: string;
+  metadata: string;
+  gain: number;
+  normalizePeak: number;
+  enableNormalizePeak: boolean;
+  enableTrim: boolean;
+  startTime: string;
+  endTime: string;
+  useCustomStart: boolean;
+  useCustomEnd: boolean;
+};
+
 type UploadPayload = {
   file: File;
   outputFormat: string;
   quality: string;
+  options: UploadOptions;
 };
 
 const uploadMutationOptions = (onError?: () => void) =>
   mutationOptions({
     mutationKey: uploadQueryKeys.upload(),
-    mutationFn: async ({ file, outputFormat, quality }: UploadPayload) => {
+    mutationFn: async ({
+      file,
+      outputFormat,
+      quality,
+      options,
+    }: UploadPayload) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("output_format", outputFormat);
       formData.append("quality", quality);
+      formData.append("options", JSON.stringify(options));
 
       const [data, error] = await apiRequest<unknown>({
         method: "POST",

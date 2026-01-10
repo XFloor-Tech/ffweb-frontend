@@ -26,9 +26,15 @@ const ALLOWED_EXTENSIONS = new Set([
   "webm",
 ]);
 
+const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 * 1024;
+
 const isAllowedFile = (file: File) => {
   const extension = file.name.split(".").pop()?.toLowerCase();
-  return Boolean(extension && ALLOWED_EXTENSIONS.has(extension));
+  return Boolean(
+    extension &&
+      ALLOWED_EXTENSIONS.has(extension) &&
+      file.size <= MAX_FILE_SIZE_BYTES,
+  );
 };
 
 const FileDropzone: FC<Props> = ({
