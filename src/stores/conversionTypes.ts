@@ -1,7 +1,7 @@
 // types/conversionTypes.ts
-export type CodecType = 'AAC' | 'MP3' | 'FLAC' | 'WAV' | 'AIFF' | 'OGG' | 'OPUS' | 'M4A';
-export type BitrateType = '64k' | '128k' | '192k' | '256k' | '320k';
-export type SampleRateType = '44.1kHz' | '48kHz' | '96kHz' | '192kHz';
+export type CodecType = 'AAC' | 'M4A' | 'OGG' | 'OPUS' | 'MP3' | 'FLAC' | 'WAV' | 'AIFF';
+export type BitrateType = '64k' |'96k' |  '128k' |  '160k' |'192k' | '256k' | '320k';
+export type SampleRateType = '16kHz' | '25kHz' |'32kHz' | '44.1kHz' | '48kHz' | '96kHz';
 export type ChannelsType = '1 (Mono)' | '2 (Stereo)' | '5.1' | '7.1';
 export type BitDepthType = '16' | '24' | '32' | 'float';
 export type MetadataType = 'Preserve' | 'Remove' | 'Clear';
