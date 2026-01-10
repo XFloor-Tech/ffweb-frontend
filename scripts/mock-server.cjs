@@ -1,162 +1,330 @@
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const { randomUUID } = require('crypto');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// In-memory data store
+// Configure multer for handling multipart/form-data
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// In-memory data store for tasks
 let db = {
-  users: [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "admin" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "user" },
-  ],
-  posts: [
-    { id: 1, title: "First Post", content: "Hello World!", authorId: 1 },
-    {
-      id: 2,
-      title: "Second Post",
-      content: "Mock backend is ready",
-      authorId: 2,
-    },
-  ],
-  todos: [
-    { id: 1, text: "Learn React", completed: false },
-    { id: 2, text: "Build awesome app", completed: true },
-  ],
-  products: [
-    { id: 1, name: "Product A", price: 29.99, category: "electronics" },
-    { id: 2, name: "Product B", price: 49.99, category: "books" },
-  ],
+  tasks: [],
 };
 
-let nextIds = { users: 3, posts: 3, todos: 3, products: 3 };
+// Chunk storage for chunked uploads
+let chunkStorage = new Map(); // taskId -> { chunks: [], metadata: {}, totalChunks: 0 }
+
+// SSE clients for events
+let sseClients = new Map(); // taskId -> Set of response objects
 
 // Health check
-app.get("/health", (req, res) =>
-  res.json({ status: "ok", timestamp: new Date().toISOString() }),
-);
+app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // Simulate delay (default 2s, override with ?delay=ms or ?delay=0 for instant)
 app.use((req, res, next) => {
-  const delay =
-    req.query.delay !== undefined ? parseInt(req.query.delay) : 2000;
+  const delay = req.query.delay !== undefined ? parseInt(req.query.delay) : 2000;
   setTimeout(next, delay);
 });
 
-// Generic CRUD helpers
-const getAll = (resource) => (req, res) => res.json(db[resource]);
-const getById = (resource) => (req, res) => {
-  const item = db[resource].find((x) => x.id === parseInt(req.params.id));
-  item ? res.json(item) : res.status(404).json({ error: "Not found" });
-};
-const create = (resource) => (req, res) => {
-  const item = { id: nextIds[resource]++, ...req.body };
-  db[resource].push(item);
-  res.status(201).json(item);
-};
-const update = (resource) => (req, res) => {
-  const idx = db[resource].findIndex((x) => x.id === parseInt(req.params.id));
-  if (idx === -1) return res.status(404).json({ error: "Not found" });
-  db[resource][idx] = { ...db[resource][idx], ...req.body };
-  res.json(db[resource][idx]);
-};
-const remove = (resource) => (req, res) => {
-  const idx = db[resource].findIndex((x) => x.id === parseInt(req.params.id));
-  if (idx === -1) return res.status(404).json({ error: "Not found" });
-  db[resource].splice(idx, 1);
-  res.status(204).send();
-};
+// Helper: Simulate conversion progress
+function simulateConversion(taskId) {
+  const task = db.tasks.find(t => t.id === taskId);
+  if (!task) return;
 
-// Resources - apply CRUD to each
-["users", "posts", "todos", "products"].forEach((resource) => {
-  app.get(`/api/${resource}`, getAll(resource));
-  app.get(`/api/${resource}/:id`, getById(resource));
-  app.post(`/api/${resource}`, create(resource));
-  app.put(`/api/${resource}/:id`, update(resource));
-  app.delete(`/api/${resource}/:id`, remove(resource));
-});
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += Math.random() * 15 + 5;
+    if (progress >= 100) {
+      progress = 100;
+      task.status = 'completed';
+      task.progress = 100;
+      task.updated_at = new Date().toISOString();
+      clearInterval(interval);
 
-// Auth endpoints (mock)
-app.post("/api/auth/login", (req, res) => {
-  const { email, password } = req.body;
-  const user = db.users.find((u) => u.email === email);
-  if (user) {
-    res.json({ token: "mock-jwt-token", user });
-  } else {
-    res.status(401).json({ error: "Invalid credentials" });
+      // Notify SSE clients
+      const clients = sseClients.get(taskId);
+      if (clients) {
+        clients.forEach(client => {
+          client.write(`data: ${JSON.stringify({ status: 'completed', progress: 100 })}\n\n`);
+        });
+      }
+    } else {
+      task.progress = Math.floor(progress);
+      task.updated_at = new Date().toISOString();
+
+      // Notify SSE clients
+      const clients = sseClients.get(taskId);
+      if (clients) {
+        clients.forEach(client => {
+          client.write(`data: ${JSON.stringify({ status: 'processing', progress: task.progress })}\n\n`);
+        });
+      }
+    }
+  }, 1000);
+}
+
+// ============================================================================
+// FFmpeg Conversion API Endpoints (from Swagger documentation)
+// ============================================================================
+
+// POST /api/upload/initiate - Initiate chunked upload
+app.post('/api/upload/initiate', (req, res) => {
+  const { file_name, output_format, quality, total_chunks } = req.body;
+
+  if (!file_name || !output_format || !quality || !total_chunks) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  if (!['low', 'medium', 'high'].includes(quality)) {
+    return res.status(400).json({ error: 'Invalid quality' });
+  }
+
+  const taskId = randomUUID();
+  chunkStorage.set(taskId, {
+    chunks: [],
+    metadata: { file_name, output_format, quality },
+    totalChunks
+  });
+
+  const task = {
+    id: taskId,
+    input_file_path: `/uploads/${file_name}`,
+    output_file_path: '',
+    status: 'uploading',
+    progress: 0,
+    error: '',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  db.tasks.push(task);
+
+  res.status(201).json({
+    task_id: taskId,
+    status: 'uploading',
+    total_chunks
+  });
 });
 
-app.post("/api/auth/logout", (req, res) => res.json({ message: "Logged out" }));
+// POST /api/upload/chunk - Upload a file chunk
+app.post('/api/upload/chunk', upload.single('chunk'), (req, res) => {
+  const { task_id, chunk_number, total_chunks, chunk_hash } = req.body;
 
-app.get("/api/auth/me", (req, res) => {
-  res.json(db.users[0]);
+  if (!task_id || chunk_number === undefined || !total_chunks || !req.file) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const storage = chunkStorage.get(task_id);
+  if (!storage) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  // Store chunk
+  storage.chunks[parseInt(chunk_number)] = {
+    data: req.file.buffer,
+    hash: chunk_hash
+  };
+
+  // Update task
+  const task = db.tasks.find(t => t.id === task_id);
+  if (task) {
+    task.progress = Math.floor(((parseInt(chunk_number) + 1) / total_chunks) * 50);
+    task.updated_at = new Date().toISOString();
+  }
+
+  res.json({
+    message: 'Чанк загружен',
+    chunk_number: parseInt(chunk_number),
+    total_chunks: parseInt(total_chunks)
+  });
 });
 
-// Search endpoint
-app.get("/api/search/:resource", (req, res) => {
-  const { resource } = req.params;
-  const { q } = req.query;
-  if (!db[resource])
-    return res.status(404).json({ error: "Resource not found" });
-  const results = db[resource].filter((item) =>
-    Object.values(item).some((v) =>
-      String(v)
-        .toLowerCase()
-        .includes(q?.toLowerCase() || ""),
-    ),
-  );
-  res.json(results);
+// POST /api/upload/complete - Complete chunked upload
+app.post('/api/upload/complete', (req, res) => {
+  const { task_id, file_name, output_format, quality, total_chunks } = req.body;
+
+  if (!task_id || !file_name || !output_format || !quality || !total_chunks) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const storage = chunkStorage.get(task_id);
+  if (!storage) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  // Verify all chunks are received
+  if (storage.chunks.length !== total_chunks) {
+    return res.status(400).json({ error: 'Missing chunks' });
+  }
+
+  // Update task
+  const task = db.tasks.find(t => t.id === task_id);
+  if (task) {
+    task.status = 'processing';
+    task.output_file_path = `/outputs/${file_name.replace(/\.[^.]+$/, `.${output_format}`)}`;
+    task.updated_at = new Date().toISOString();
+
+    // Start conversion simulation
+    simulateConversion(task_id);
+  }
+
+  // Clean up chunk storage
+  chunkStorage.delete(task_id);
+
+  res.json({
+    message: 'Загрузка завершена, начата конвертация',
+    task_id
+  });
 });
 
-// Reset data
-app.post("/api/reset", (req, res) => {
-  db.users = [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "admin" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "user" },
-  ];
-  db.posts = [
-    { id: 1, title: "First Post", content: "Hello World!", authorId: 1 },
-    {
-      id: 2,
-      title: "Second Post",
-      content: "Mock backend is ready",
-      authorId: 2,
-    },
-  ];
-  db.todos = [
-    { id: 1, text: "Learn React", completed: false },
-    { id: 2, text: "Build awesome app", completed: true },
-  ];
-  db.products = [
-    { id: 1, name: "Product A", price: 29.99, category: "electronics" },
-    { id: 2, name: "Product B", price: 49.99, category: "books" },
-  ];
-  nextIds = { users: 3, posts: 3, todos: 3, products: 3 };
-  res.json({ message: "Data reset to initial state" });
+// POST /api/upload - Upload file for conversion (single file)
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  const { file } = req;
+  const { output_format, quality, options } = req.body;
+
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  if (!output_format || !quality) {
+    return res.status(400).json({ error: 'Missing output_format or quality' });
+  }
+
+  if (!['low', 'medium', 'high'].includes(quality)) {
+    return res.status(400).json({ error: 'Invalid quality' });
+  }
+
+  const taskId = randomUUID();
+  const task = {
+    id: taskId,
+    input_file_path: `/uploads/${file.originalname}`,
+    output_file_path: `/outputs/${file.originalname.replace(/\.[^.]+$/, `.${output_format}`)}`,
+    status: 'processing',
+    progress: 0,
+    error: '',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  db.tasks.push(task);
+
+  // Start conversion simulation
+  simulateConversion(taskId);
+
+  res.status(201).json({
+    task_id: taskId,
+    status: 'processing'
+  });
+});
+
+// GET /api/task/:id - Get task status
+app.get('/api/task/:id', (req, res) => {
+  const { id } = req.params;
+
+  const task = db.tasks.find(t => t.id === id);
+  if (!task) {
+    return res.status(404).json({ error: 'Задача не найдена' });
+  }
+
+  res.json(task);
+});
+
+// DELETE /api/task/:id - Cancel a task
+app.delete('/api/task/:id', (req, res) => {
+  const { id } = req.params;
+
+  const taskIndex = db.tasks.findIndex(t => t.id === id);
+  if (taskIndex === -1) {
+    return res.status(400).json({ error: 'Задача не найдена' });
+  }
+
+  db.tasks[taskIndex].status = 'cancelled';
+  db.tasks[taskIndex].updated_at = new Date().toISOString();
+
+  // Notify SSE clients
+  const clients = sseClients.get(id);
+  if (clients) {
+    clients.forEach(client => {
+      client.write(`data: ${JSON.stringify({ status: 'cancelled' })}\n\n`);
+    });
+  }
+
+  res.json({ message: 'Задача отменена' });
+});
+
+// GET /api/download/:id - Download converted file
+app.get('/api/download/:id', (req, res) => {
+  const { id } = req.params;
+
+  const task = db.tasks.find(t => t.id === id);
+  if (!task) {
+    return res.status(404).json({ error: 'Файл не найден' });
+  }
+
+  if (task.status !== 'completed') {
+    return res.status(400).json({ error: 'Конвертация не завершена' });
+  }
+
+  // Return a mock file
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="${task.output_file_path.split('/').pop()}"`);
+  res.send(Buffer.from('Mock converted file content'));
+});
+
+// GET /api/events/:id - Stream task events (SSE)
+app.get('/api/events/:id', (req, res) => {
+  const { id } = req.params;
+
+  const task = db.tasks.find(t => t.id === id);
+  if (!task) {
+    return res.status(404).json({ error: 'Задача не найдена' });
+  }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Add client to SSE clients
+  if (!sseClients.has(id)) {
+    sseClients.set(id, new Set());
+  }
+  sseClients.get(id).add(res);
+
+  // Send current status
+  res.write(`data: ${JSON.stringify({ status: task.status, progress: task.progress })}\n\n`);
+
+  // Remove client on disconnect
+  req.on('close', () => {
+    const clients = sseClients.get(id);
+    if (clients) {
+      clients.delete(res);
+      if (clients.size === 0) {
+        sseClients.delete(id);
+      }
+    }
+  });
 });
 
 // 404 handler
-app.use((req, res) => res.status(404).json({ error: "Endpoint not found" }));
+app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Mock server running on http://localhost:${PORT}`);
-  console.log(`\nAvailable endpoints:`);
-  console.log(`  GET    /api/users`);
-  console.log(`  GET    /api/users/:id`);
-  console.log(`  POST   /api/users`);
-  console.log(`  PUT    /api/users/:id`);
-  console.log(`  DELETE /api/users/:id`);
-  console.log(`  (Same pattern for: posts, todos, products)`);
-  console.log(`\nAuth endpoints:`);
-  console.log(`  POST   /api/auth/login`);
-  console.log(`  POST   /api/auth/logout`);
-  console.log(`  GET    /api/auth/me`);
+  console.log(`\nFFmpeg Conversion API endpoints:`);
+  console.log(`  POST   /api/upload`);
+  console.log(`  POST   /api/upload/initiate`);
+  console.log(`  POST   /api/upload/chunk`);
+  console.log(`  POST   /api/upload/complete`);
+  console.log(`  GET    /api/task/:id`);
+  console.log(`  DELETE /api/task/:id`);
+  console.log(`  GET    /api/download/:id`);
+  console.log(`  GET    /api/events/:id (SSE)`);
   console.log(`\nUtilities:`);
   console.log(`  GET    /health`);
-  console.log(`  GET    /api/search/:resource?q=query`);
-  console.log(`  POST   /api/reset`);
   console.log(`\nAdd ?delay=1000 to any request to simulate network delay`);
 });
