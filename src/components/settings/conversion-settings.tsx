@@ -37,9 +37,6 @@ export function ConversionSettings() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-xs font-normal">
-              Auto-saved
-            </Badge>
             <Button
               variant="outline"
               size="sm"

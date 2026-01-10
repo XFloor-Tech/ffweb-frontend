@@ -19,7 +19,6 @@ export function BasicSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Audio Format Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           {/* Codec */}
