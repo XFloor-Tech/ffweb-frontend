@@ -27,13 +27,11 @@ out/
 # =========================
 # Environment files
 # =========================
-.env
-.env.local
-.env.*.local
+.env*
+.env.development
 
 # Allow example env files
 !.env.example
-!.env.sample
 
 # =========================
 # TypeScript
@@ -107,4 +105,3 @@ Thumbs.db
 # =========================
 *.pem
 *.key
-
