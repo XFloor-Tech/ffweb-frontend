@@ -8,6 +8,7 @@ type Props = {
   className?: string;
   onFileSelect?: (file: File) => void;
   children?: ReactNode;
+  disabled?: boolean;
 };
 
 const ALLOWED_EXTENSIONS = new Set([
@@ -29,7 +30,12 @@ const isAllowedFile = (file: File) => {
   return Boolean(extension && ALLOWED_EXTENSIONS.has(extension));
 };
 
-const FileDropzone: FC<Props> = ({ className, onFileSelect, children }) => {
+const FileDropzone: FC<Props> = ({
+  className,
+  onFileSelect,
+  children,
+  disabled,
+}) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -97,6 +103,7 @@ const FileDropzone: FC<Props> = ({ className, onFileSelect, children }) => {
             className="hidden"
             type="file"
             onChange={handleChange}
+            disabled={disabled}
           />
           <FileDown size={48} className="text-primary" strokeWidth={1} />
           <div className="flex flex-col justify-center gap-1">
