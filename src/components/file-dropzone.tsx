@@ -9,6 +9,7 @@ type Props = {
   onFileSelect?: (file: File) => void;
   children?: ReactNode;
   disabled?: boolean;
+  selectedFile?: File | null;
 };
 
 const ALLOWED_EXTENSIONS = new Set([
@@ -35,11 +36,10 @@ const FileDropzone: FC<Props> = ({
   onFileSelect,
   children,
   disabled,
+  selectedFile,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  const [file, setFile] = useState<File | null>(null);
 
   const handleClick = () => {
     inputRef.current?.click();
@@ -50,7 +50,6 @@ const FileDropzone: FC<Props> = ({
 
     if (file && isAllowedFile(file)) {
       onFileSelect?.(file);
-      setFile(file);
     }
   };
 
@@ -83,8 +82,8 @@ const FileDropzone: FC<Props> = ({
     <div
       className={cn(
         "flex h-145 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 px-7 py-6 text-center text-white",
-        isDragging || file ? "border-primary" : "border-gray-600",
-        file ? "bg-transparent" : "border-dashed bg-gray-800",
+        isDragging || selectedFile ? "border-primary" : "border-gray-600",
+        selectedFile ? "bg-transparent" : "border-dashed bg-gray-800",
         className,
       )}
       onClick={handleClick}

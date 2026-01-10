@@ -13,7 +13,7 @@ type UploadPayload = {
   quality: string;
 };
 
-const uploadMutationOptions = () =>
+const uploadMutationOptions = (onError?: () => void) =>
   mutationOptions({
     mutationKey: uploadQueryKeys.upload(),
     mutationFn: async ({ file, outputFormat, quality }: UploadPayload) => {
@@ -43,6 +43,7 @@ const uploadMutationOptions = () =>
     },
     onError: () => {
       toast.error("Upload failed. Please try again.");
+      onError?.();
     },
   });
 
