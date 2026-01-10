@@ -43,7 +43,7 @@ const uploadMutationOptions = (onError?: () => void) =>
       formData.append("file", file);
       formData.append("output_format", outputFormat);
       formData.append("quality", quality);
-      formData.append("options", JSON.stringify(options));
+      // formData.append("options", JSON.stringify(options));
 
       const [data, error] = await apiRequest<unknown>({
         method: "POST",
