@@ -15,6 +15,8 @@
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, "Liberation Mono", "Courier New", monospace;
+  --breakpoint-xl: 1280px;
+  --breakpoint-xxl: 1440px;
 
   /* TYPOGRAPHY */
   --text-h4: 1.25rem;

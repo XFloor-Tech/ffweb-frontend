@@ -21,7 +21,7 @@ const App: FC = () => {
   }
 
   return (
-    <div className="min-h-screen px-4 py-4 md:px-12 md:py-6 lg:px-64">
+    <div className="min-h-screen px-4 py-4 xxl:px-64 md:px-12 md:py-6 lg:px-48">
       <div className="flex flex-col gap-6">
         <Header />
         <main>
