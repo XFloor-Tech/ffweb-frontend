@@ -12,10 +12,10 @@
  * - POST   /api/upload/complete
  */
 
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
+const express = require("express");
+const cors = require("cors");
+const multer = require("multer");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 const PORT = 3000;
@@ -42,7 +42,7 @@ function simulateProcessing(taskId) {
     progress += Math.random() * 20 + 10;
 
     const task = tasks.get(taskId);
-    if (!task || task.status === 'cancelled') {
+    if (!task || task.status === "cancelled") {
       clearInterval(interval);
       return;
     }
@@ -51,11 +51,11 @@ function simulateProcessing(taskId) {
     task.updated_at = new Date().toISOString();
 
     if (task.progress >= 100) {
-      task.status = 'completed';
+      task.status = "completed";
       task.fileReady = true;
       clearInterval(interval);
     } else {
-      task.status = 'processing';
+      task.status = "processing";
     }
 
     tasks.set(taskId, task);
@@ -68,22 +68,22 @@ function simulateProcessing(taskId) {
  * POST /api/upload
  * Upload a file and receive a task_id for tracking
  */
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post("/api/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No file provided' });
+    return res.status(400).json({ error: "No file provided" });
   }
 
   const taskId = uuidv4();
   const task = {
     task_id: taskId,
-    status: 'queued',
+    status: "queued",
     progress: 0,
     filename: req.file.originalname,
     size: req.file.size,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     fileData: req.file.buffer,
-    fileReady: false
+    fileReady: false,
   };
 
   tasks.set(taskId, task);
@@ -93,8 +93,8 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 
   res.status(201).json({
     task_id: taskId,
-    status: 'queued',
-    message: 'File uploaded successfully'
+    status: "queued",
+    message: "File uploaded successfully",
   });
 });
 
@@ -102,11 +102,11 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
  * GET /api/task/:id
  * Get the current status of a processing task
  */
-app.get('/api/task/:id', (req, res) => {
+app.get("/api/task/:id", (req, res) => {
   const task = tasks.get(req.params.id);
 
   if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
+    return res.status(404).json({ error: "Task not found" });
   }
 
   res.json({
@@ -116,7 +116,7 @@ app.get('/api/task/:id', (req, res) => {
     filename: task.filename,
     created_at: task.created_at,
     updated_at: task.updated_at,
-    error: task.error || null
+    error: task.error || null,
   });
 });
 
@@ -124,17 +124,17 @@ app.get('/api/task/:id', (req, res) => {
  * GET /api/events/:id
  * Server-Sent Events stream for real-time progress updates
  */
-app.get('/api/events/:id', (req, res) => {
+app.get("/api/events/:id", (req, res) => {
   const task = tasks.get(req.params.id);
 
   if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
+    return res.status(404).json({ error: "Task not found" });
   }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
 
   const sendEvent = (data) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -142,11 +142,11 @@ app.get('/api/events/:id', (req, res) => {
 
   // Send initial state
   sendEvent({
-    type: 'progress',
+    type: "progress",
     task_id: task.task_id,
     status: task.status,
     progress: task.progress,
-    message: `Processing: ${task.progress}%`
+    message: `Processing: ${task.progress}%`,
   });
 
   // Send updates every second
@@ -155,31 +155,34 @@ app.get('/api/events/:id', (req, res) => {
 
     if (!currentTask) {
       clearInterval(interval);
-      sendEvent({ type: 'error', message: 'Task not found' });
+      sendEvent({ type: "error", message: "Task not found" });
       res.end();
       return;
     }
 
     sendEvent({
-      type: 'progress',
+      type: "progress",
       task_id: currentTask.task_id,
       status: currentTask.status,
       progress: currentTask.progress,
-      message: `Processing: ${currentTask.progress}%`
+      message: `Processing: ${currentTask.progress}%`,
     });
 
-    if (currentTask.status === 'completed') {
+    if (currentTask.status === "completed") {
       clearInterval(interval);
-      sendEvent({ type: 'complete', task_id: currentTask.task_id });
+      sendEvent({ type: "complete", task_id: currentTask.task_id });
       res.end();
-    } else if (currentTask.status === 'failed' || currentTask.status === 'cancelled') {
+    } else if (
+      currentTask.status === "failed" ||
+      currentTask.status === "cancelled"
+    ) {
       clearInterval(interval);
-      sendEvent({ type: 'close', task_id: currentTask.task_id });
+      sendEvent({ type: "close", task_id: currentTask.task_id });
       res.end();
     }
   }, 1000);
 
-  req.on('close', () => {
+  req.on("close", () => {
     clearInterval(interval);
   });
 });
@@ -188,23 +191,26 @@ app.get('/api/events/:id', (req, res) => {
  * GET /api/download/:id
  * Download the processed file
  */
-app.get('/api/download/:id', (req, res) => {
+app.get("/api/download/:id", (req, res) => {
   const task = tasks.get(req.params.id);
 
   if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
+    return res.status(404).json({ error: "Task not found" });
   }
 
-  if (task.status !== 'completed') {
-    return res.status(400).json({ error: 'File processing not completed' });
+  if (task.status !== "completed") {
+    return res.status(400).json({ error: "File processing not completed" });
   }
 
   if (!task.fileReady) {
-    return res.status(410).json({ error: 'File no longer available' });
+    return res.status(410).json({ error: "File no longer available" });
   }
 
-  res.setHeader('Content-Type', 'application/octet-stream');
-  res.setHeader('Content-Disposition', `attachment; filename="processed_${task.filename}"`);
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="processed_${task.filename}"`,
+  );
   res.send(task.fileData);
 });
 
@@ -212,25 +218,25 @@ app.get('/api/download/:id', (req, res) => {
  * DELETE /api/task/:id
  * Cancel a processing task
  */
-app.delete('/api/task/:id', (req, res) => {
+app.delete("/api/task/:id", (req, res) => {
   const task = tasks.get(req.params.id);
 
   if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
+    return res.status(404).json({ error: "Task not found" });
   }
 
-  if (task.status === 'completed') {
-    return res.status(400).json({ error: 'Cannot cancel completed task' });
+  if (task.status === "completed") {
+    return res.status(400).json({ error: "Cannot cancel completed task" });
   }
 
-  task.status = 'cancelled';
+  task.status = "cancelled";
   task.updated_at = new Date().toISOString();
   tasks.set(req.params.id, task);
 
   res.json({
     task_id: req.params.id,
-    status: 'cancelled',
-    message: 'Task cancelled successfully'
+    status: "cancelled",
+    message: "Task cancelled successfully",
   });
 });
 
@@ -240,11 +246,11 @@ app.delete('/api/task/:id', (req, res) => {
  * POST /api/upload/chunk
  * Upload a file chunk (for files larger than 1GB)
  */
-app.post('/api/upload/chunk', upload.single('chunk'), (req, res) => {
+app.post("/api/upload/chunk", upload.single("chunk"), (req, res) => {
   const { uploadId, chunkIndex, totalChunks, filename } = req.body;
 
   if (!uploadId || chunkIndex === undefined || !totalChunks || !req.file) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: "Missing required fields" });
   }
 
   const index = parseInt(chunkIndex);
@@ -253,10 +259,10 @@ app.post('/api/upload/chunk', upload.single('chunk'), (req, res) => {
   if (!chunkedUploads.has(uploadId)) {
     chunkedUploads.set(uploadId, {
       id: uploadId,
-      filename: filename || 'unknown',
+      filename: filename || "unknown",
       totalChunks: total,
       receivedChunks: new Map(),
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     });
   }
 
@@ -268,7 +274,7 @@ app.post('/api/upload/chunk', upload.single('chunk'), (req, res) => {
     chunkIndex: index,
     received: uploadSession.receivedChunks.size,
     totalChunks: total,
-    message: `Chunk ${index + 1} of ${total} uploaded`
+    message: `Chunk ${index + 1} of ${total} uploaded`,
   });
 });
 
@@ -276,26 +282,26 @@ app.post('/api/upload/chunk', upload.single('chunk'), (req, res) => {
  * POST /api/upload/complete
  * Finalize chunked upload and get task_id
  */
-app.post('/api/upload/complete', (req, res) => {
+app.post("/api/upload/complete", (req, res) => {
   const { uploadId, filename, totalChunks } = req.body;
 
   if (!uploadId) {
-    return res.status(400).json({ error: 'uploadId is required' });
+    return res.status(400).json({ error: "uploadId is required" });
   }
 
   const uploadSession = chunkedUploads.get(uploadId);
 
   if (!uploadSession) {
-    return res.status(404).json({ error: 'Upload session not found' });
+    return res.status(404).json({ error: "Upload session not found" });
   }
 
   const expectedChunks = parseInt(totalChunks) || uploadSession.totalChunks;
 
   if (uploadSession.receivedChunks.size !== expectedChunks) {
     return res.status(400).json({
-      error: 'Incomplete upload',
+      error: "Incomplete upload",
       received: uploadSession.receivedChunks.size,
-      expected: expectedChunks
+      expected: expectedChunks,
     });
   }
 
@@ -310,14 +316,14 @@ app.post('/api/upload/complete', (req, res) => {
   const taskId = uuidv4();
   const task = {
     task_id: taskId,
-    status: 'queued',
+    status: "queued",
     progress: 0,
     filename: filename || uploadSession.filename,
     size: combinedBuffer.length,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     fileData: combinedBuffer,
-    fileReady: false
+    fileReady: false,
   };
 
   tasks.set(taskId, task);
@@ -328,23 +334,24 @@ app.post('/api/upload/complete', (req, res) => {
 
   res.status(201).json({
     task_id: taskId,
-    status: 'queued',
+    status: "queued",
     filename: task.filename,
     size: task.size,
-    message: 'Chunked upload completed, processing started'
+    message: "Chunked upload completed, processing started",
   });
 });
 
 // ==================== Health Check ====================
 
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
+  // res.status(403).json({ error: "Forbidden" });
   res.json({
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
     stats: {
       active_tasks: tasks.size,
-      chunked_uploads: chunkedUploads.size
-    }
+      chunked_uploads: chunkedUploads.size,
+    },
   });
 });
 

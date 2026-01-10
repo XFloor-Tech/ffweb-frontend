@@ -1,24 +1,20 @@
 import type { FC } from "react";
-import { useQuery } from "@tanstack/react-query";
 
-import { healthQueryOptions } from "./queries";
+import { UploadSettings } from "@/components/upload-settings";
+import { FileUpload } from "./file-upload";
 
 type Props = {};
 
 const UploadPage: FC<Props> = () => {
-  const { data, isLoading, isError } = useQuery(healthQueryOptions());
-
-  if (isLoading) {
-    return <div className="text-white">Loading mock server...</div>;
-  }
-
-  if (isError) {
-    return <div className="text-red-400">Mock server unavailable.</div>;
-  }
-
   return (
-    <div className="text-white">
-      Mock server status: {data?.status ?? "unknown"}
+    <div className="grid gap-4 text-white xxl:grid-cols-[minmax(0,960px)_minmax(0,1fr)]">
+      <section className="min-h-screen w-full xxl:max-w-[960px]">
+        <FileUpload />
+      </section>
+
+      <section className="hidden min-h-screen w-full xxl:block">
+        <UploadSettings />
+      </section>
     </div>
   );
 };
