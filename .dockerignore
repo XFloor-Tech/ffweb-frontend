@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+LICENSE
+
+# IDE
+.vscode
+.idea
+.cursor
+
+# Временные файлы
+tmp/
+*.tmp
+*.swp
+*.swo
+
+# Файлы загрузок и выходные файлы
+uploads/
+outputs/
+
+# Скомпилированные бинарники
+ffweb-backend
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+testdata/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
