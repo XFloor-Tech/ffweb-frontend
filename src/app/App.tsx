@@ -1,11 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { healthQueryOptions } from "@/app/queries";
 import { Header } from "@/components/layout/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Toaster } from "@/components/ui/sonner";
 import { UploadPage } from "@/pages/upload";
 
 const App: FC = () => {
@@ -27,26 +28,32 @@ const App: FC = () => {
 
   if (!isHealthy) {
     return (
-      <div className="min-h-screen px-4 py-4 xxl:px-64 md:px-12 md:py-6 lg:px-48">
-        <Alert variant="destructive">
-          <AlertTitle>We couldn't reach the server</AlertTitle>
-          <AlertDescription>
-            Please start the mock server and reload the page.
-          </AlertDescription>
-        </Alert>
-      </div>
+      <>
+        <Toaster />
+        <div className="min-h-screen px-4 py-4 2xl:px-64 md:px-12 md:py-6 lg:px-48">
+          <Alert variant="destructive">
+            <AlertTitle>We couldn't reach the server</AlertTitle>
+            <AlertDescription>
+              Please start the mock server and reload the page.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen px-4 py-4 xxl:px-64 md:px-12 md:py-6 lg:px-48">
-      <div className="flex flex-col gap-6">
-        <Header />
-        <main>
-          <UploadPage />
-        </main>
+    <>
+      <Toaster />
+      <div className="min-h-screen px-4 py-4 2xl:px-64 md:px-12 md:py-6 lg:px-48">
+        <div className="flex flex-col gap-6">
+          <Header />
+          <main>
+            <UploadPage />
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
