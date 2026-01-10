@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { apiRequest } from "@/lib/api-client";
 
-const appQueryKeys = {
+const uploadQueryKeys = {
   health: () => ["health"],
 } as const;
 
@@ -17,7 +17,7 @@ type HealthResponse = {
 
 const healthQueryOptions = () =>
   queryOptions({
-    queryKey: appQueryKeys.health(),
+    queryKey: uploadQueryKeys.health(),
     queryFn: async () => {
       const [data, error] = await apiRequest<HealthResponse>({
         method: "GET",
