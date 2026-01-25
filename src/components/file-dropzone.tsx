@@ -32,8 +32,8 @@ const isAllowedFile = (file: File) => {
   const extension = file.name.split(".").pop()?.toLowerCase();
   return Boolean(
     extension &&
-      ALLOWED_EXTENSIONS.has(extension) &&
-      file.size <= MAX_FILE_SIZE_BYTES,
+    ALLOWED_EXTENSIONS.has(extension) &&
+    file.size <= MAX_FILE_SIZE_BYTES,
   );
 };
 
@@ -89,7 +89,9 @@ const FileDropzone: FC<Props> = ({
       className={cn(
         "flex h-145 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 px-7 py-6 text-center text-white",
         isDragging || selectedFile ? "border-primary" : "border-gray-600",
-        selectedFile ? "bg-transparent" : "border-dashed bg-gray-800",
+        selectedFile
+          ? "cursor-auto bg-transparent"
+          : "border-dashed bg-gray-800",
         className,
       )}
       onClick={handleClick}

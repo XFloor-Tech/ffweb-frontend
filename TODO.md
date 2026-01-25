@@ -11,9 +11,11 @@
 
 ## Next
 
-- [ ] Finish SSE conversion flow on the frontend (start conversion, subscribe to progress events, display progress/state, handle errors/cancel/retry)
-- [ ] Implement download flow for converted file(s) (success state + “Download” action, filename handling)
+- [x] Finish SSE conversion flow on the frontend (start conversion, subscribe to progress events, display progress/state, handle errors/cancel/retry)
+- [x] Implement download flow for converted file(s) (success state + “Download” action, filename handling)
 - [ ] Improve settings bar (UX + visuals) to match overall composition (layout, spacing, typography, states, accessibility)
+- [ ] SSE error retry handle (when sse fails we should be able to retry sse with button: check task status with api req first, then when pending - make sse req again)
+- [ ] On task status get, when its errored - make retry flow
 
 ## Later
 
