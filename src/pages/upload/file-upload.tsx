@@ -1,6 +1,7 @@
 import { useEffect, useState, type FC } from "react";
 
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Track } from "@/components/track";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { API_BASE_URL } from "@/lib/api-client";
 import { streamSse } from "@/lib/sse";
 import { useConversionStore } from "@/stores/conversionStore";
+import {
+  BUTTON_LABELS,
+  DEFAULT_PROGRESS_LABEL,
+  PROGRESS_LABEL_BY_TASK_STATUS,
+  TaskStatus,
+  TOAST_MESSAGES,
+  TrackStatus,
+} from "./constants";
 import { downloadMutationOptions, getTaskStatus, uploadMutationOptions } from "./queries";
 import { formatFileSize, getFileFormat, getQualityFromBitrate } from "./utils";
 
@@ -111,14 +120,17 @@ const FileUpload: FC<Props> = () => {
               setTaskProgress(normalizedProgress);
             }
 
-            if (maybeStatus === "completed" || maybeStatus === "cancelled") {
+            if (
+              maybeStatus === TaskStatus.Completed ||
+              maybeStatus === TaskStatus.Cancelled
+            ) {
               controller.abort();
             }
           },
         });
       } catch {
         if (controller.signal.aborted) return;
-        setTaskStatus("error");
+        setTaskStatus(TaskStatus.Error);
       }
     };
 
@@ -129,20 +141,20 @@ const FileUpload: FC<Props> = () => {
 
   useEffect(() => {
     if (!taskId) return;
-    if (taskStatus !== "completed") return;
+    if (taskStatus !== TaskStatus.Completed) return;
     if (isTaskCompleted) return;
 
     const run = async () => {
       try {
         const task = await getTaskStatus(taskId);
-        if (task.status === "completed") {
+        if (task.status === TaskStatus.Completed) {
           setIsTaskCompleted(true);
           return;
         }
 
         setTaskStatus(task.status);
       } catch {
-        setTaskStatus("error");
+        setTaskStatus(TaskStatus.Error);
       }
     };
 
@@ -150,7 +162,10 @@ const FileUpload: FC<Props> = () => {
   }, [isTaskCompleted, taskId, taskStatus]);
 
   const handleRetry = async () => {
-    if (!taskId) return;
+    if (!taskId) {
+      toast.error(TOAST_MESSAGES.noTaskSelected);
+      return;
+    }
 
     setIsRetrying(true);
     try {
@@ -161,17 +176,17 @@ const FileUpload: FC<Props> = () => {
         setTaskProgress(Math.min(100, Math.max(0, Math.floor(task.progress))));
       }
 
-      if (task.status === "completed") {
+      if (task.status === TaskStatus.Completed) {
         setIsTaskCompleted(true);
         return;
       }
 
-      if (task.status === "processing" || task.status === "pending") {
+      if (task.status === TaskStatus.Processing || task.status === TaskStatus.Pending) {
         setSseAttempt((value) => value + 1);
         return;
       }
     } catch {
-      setTaskStatus("error");
+      setTaskStatus(TaskStatus.Error);
     } finally {
       setIsRetrying(false);
     }
@@ -230,20 +245,21 @@ const FileUpload: FC<Props> = () => {
     }
 
     const trackStatus =
-      taskStatus === "error"
-        ? "error"
+      taskStatus === TaskStatus.Error
+        ? TrackStatus.Error
         : isTaskCompleted
-          ? "done"
+          ? TrackStatus.Done
           : taskId
-            ? "converting"
+            ? TrackStatus.Converting
             : undefined;
-    const showProgress = !!taskId && taskStatus !== "error" && !isTaskCompleted;
+    const showProgress =
+      !!taskId && taskStatus !== TaskStatus.Error && !isTaskCompleted;
     const progressLabel =
       isTaskCompleted
-        ? "Completed"
-        : taskStatus === "cancelled"
-          ? "Cancelled"
-          : "Converting";
+        ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Completed] ?? DEFAULT_PROGRESS_LABEL)
+        : taskStatus === TaskStatus.Cancelled
+          ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Cancelled] ?? DEFAULT_PROGRESS_LABEL)
+          : DEFAULT_PROGRESS_LABEL;
 
     return (
       <>
@@ -279,23 +295,23 @@ const FileUpload: FC<Props> = () => {
               onClick={() => download({ taskId })}
               variant="secondary"
             >
-              {isDownloading ? "Downloading..." : "Download"}
+              {isDownloading ? BUTTON_LABELS.downloading : BUTTON_LABELS.download}
             </Button>
-            <Button onClick={resetFlow}>Convert more</Button>
+            <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
-        ) : taskStatus === "error" || taskStatus === "cancelled" ? (
+        ) : taskStatus === TaskStatus.Error || taskStatus === TaskStatus.Cancelled ? (
           <>
             <Button disabled={isRetrying} onClick={handleRetry} variant="secondary">
-              {isRetrying ? "Retrying..." : "Retry"}
+              {isRetrying ? BUTTON_LABELS.retrying : BUTTON_LABELS.retry}
             </Button>
-            <Button onClick={resetFlow}>Convert more</Button>
+            <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
         ) : (
           <Button
             disabled={!selectedFile || isUploading || !!taskId}
             onClick={handleConvert}
           >
-            Convert
+            {BUTTON_LABELS.convert}
           </Button>
         )}
       </div>
