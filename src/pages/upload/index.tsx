@@ -25,7 +25,7 @@ const UploadPage: FC<Props> = () => {
               <Settings className="size-5 text-gray-50" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-full max-w-[calc(100%-2rem)] p-0 sm:max-w-[calc(100%-4rem)]">
+          <DialogContent className="max-h-[calc(100%-4rem)] w-full max-w-[calc(100%-2rem)] p-0 sm:max-w-[calc(100%-4rem)]">
             <UploadSettings />
           </DialogContent>
         </Dialog>
