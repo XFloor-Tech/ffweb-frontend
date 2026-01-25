@@ -26,6 +26,8 @@ const FileUpload: FC<Props> = () => {
   const [taskStatus, setTaskStatus] = useState<string | null>(null);
   const [taskProgress, setTaskProgress] = useState<number>(0);
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [sseAttempt, setSseAttempt] = useState(0);
   const { mutate: upload, isPending: isUploading } = useMutation(
     uploadMutationOptions({
       onError: () => setSelectedFile(null),
@@ -34,6 +36,7 @@ const FileUpload: FC<Props> = () => {
         setTaskStatus(status);
         setTaskProgress(0);
         setIsTaskCompleted(false);
+        setSseAttempt(0);
       },
     }),
   );
@@ -66,11 +69,14 @@ const FileUpload: FC<Props> = () => {
     setTaskStatus(null);
     setTaskProgress(0);
     setIsTaskCompleted(false);
+    setIsRetrying(false);
+    setSseAttempt(0);
     resetToDefaults();
   };
 
   useEffect(() => {
     if (!taskId) return;
+    if (isTaskCompleted) return;
 
     const controller = new AbortController();
     const url = `${API_BASE_URL}/api/events/${taskId}`;
@@ -119,7 +125,7 @@ const FileUpload: FC<Props> = () => {
     run();
 
     return () => controller.abort();
-  }, [taskId]);
+  }, [isTaskCompleted, sseAttempt, taskId]);
 
   useEffect(() => {
     if (!taskId) return;
@@ -143,6 +149,34 @@ const FileUpload: FC<Props> = () => {
     run();
   }, [isTaskCompleted, taskId, taskStatus]);
 
+  const handleRetry = async () => {
+    if (!taskId) return;
+
+    setIsRetrying(true);
+    try {
+      const task = await getTaskStatus(taskId);
+      setTaskStatus(task.status);
+
+      if (typeof task.progress === "number") {
+        setTaskProgress(Math.min(100, Math.max(0, Math.floor(task.progress))));
+      }
+
+      if (task.status === "completed") {
+        setIsTaskCompleted(true);
+        return;
+      }
+
+      if (task.status === "processing" || task.status === "pending") {
+        setSseAttempt((value) => value + 1);
+        return;
+      }
+    } catch {
+      setTaskStatus("error");
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   const handleFileSelect = (file: File) => {
     setIsPreparing(true);
     setSelectedFile(file);
@@ -158,6 +192,8 @@ const FileUpload: FC<Props> = () => {
     setTaskStatus(null);
     setTaskProgress(0);
     setIsTaskCompleted(false);
+    setIsRetrying(false);
+    setSseAttempt(0);
     upload({
       file: selectedFile,
       outputFormat,
@@ -247,8 +283,13 @@ const FileUpload: FC<Props> = () => {
             </Button>
             <Button onClick={resetFlow}>Convert more</Button>
           </>
-        ) : taskStatus === "error" ? (
-          <Button onClick={resetFlow}>Convert more</Button>
+        ) : taskStatus === "error" || taskStatus === "cancelled" ? (
+          <>
+            <Button disabled={isRetrying} onClick={handleRetry} variant="secondary">
+              {isRetrying ? "Retrying..." : "Retry"}
+            </Button>
+            <Button onClick={resetFlow}>Convert more</Button>
+          </>
         ) : (
           <Button
             disabled={!selectedFile || isUploading || !!taskId}
