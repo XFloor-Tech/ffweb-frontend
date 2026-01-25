@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { UploadSettings } from "@/components/upload-settings";
 import { FileUpload } from "./file-upload";
 
-type Props = {};
+type Props = Record<string, never>;
 
 const UploadPage: FC<Props> = () => {
   return (
@@ -14,7 +14,6 @@ const UploadPage: FC<Props> = () => {
       <section className="min-h-screen w-full 4xl:max-w-[960px]">
         <FileUpload />
       </section>
-
       <section className="hidden min-h-screen w-full xl:block xl:max-w-[432px]">
         <UploadSettings />
       </section>
