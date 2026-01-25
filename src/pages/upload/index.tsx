@@ -11,9 +11,10 @@ type Props = Record<string, never>;
 const UploadPage: FC<Props> = () => {
   return (
     <div className="flex gap-4">
-      <section className="h-[calc(100vh-16rem)]  w-full 4xl:max-w-[960px]">
+      <section className="min-h-screen w-full 4xl:max-w-[960px]">
         <FileUpload />
       </section>
+
       <section className="hidden min-h-screen w-full xl:block xl:max-w-[432px]">
         <UploadSettings />
       </section>
@@ -25,7 +26,8 @@ const UploadPage: FC<Props> = () => {
               <Settings className="size-5 text-gray-50" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[calc(100%-4rem)] w-full max-w-[calc(100%-2rem)] p-0 sm:max-w-[calc(100%-4rem)]">
+
+          <DialogContent className="max-h-screen overflow-auto">
             <UploadSettings />
           </DialogContent>
         </Dialog>

@@ -22,7 +22,7 @@ export function ConversionSettings({ className }: Props) {
   const { resetToDefaults } = useConversionStore();
 
   return (
-    <Card className="mx-auto w-full max-w-4xl border-gray-800 bg-gray-900 text-white">
+    <Card className="mx-auto h-full w-full max-w-4xl border-gray-950 bg-gray-900 text-white">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-3">
