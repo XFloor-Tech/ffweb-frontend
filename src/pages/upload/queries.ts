@@ -1,8 +1,11 @@
 import { mutationOptions } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { API_BASE_URL, apiRequest } from "@/lib/api-client";
-import { downloadBlob, parseFilenameFromContentDisposition } from "@/lib/download";
+import { apiRequest } from "@/lib/api-client";
+import {
+  downloadBlob,
+  parseFilenameFromContentDisposition,
+} from "@/lib/download";
 
 const uploadQueryKeys = {
   upload: () => ["upload"],
@@ -57,11 +60,7 @@ type UploadMutationCallbacks = {
 const uploadMutationOptions = (callbacks?: UploadMutationCallbacks) =>
   mutationOptions({
     mutationKey: uploadQueryKeys.upload(),
-    mutationFn: async ({
-      file,
-      outputFormat,
-      quality,
-    }: UploadPayload) => {
+    mutationFn: async ({ file, outputFormat, quality }: UploadPayload) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("output_format", outputFormat);
@@ -121,21 +120,27 @@ const downloadMutationOptions = () =>
   mutationOptions({
     mutationKey: ["download"],
     mutationFn: async ({ taskId }: DownloadPayload) => {
-      const response = await fetch(`${API_BASE_URL}/api/download/${taskId}`);
+      // const response = await fetch(`${API_BASE_URL}/api/download/${taskId}`);
+      const [data, error, headers] = await apiRequest<Blob>({
+        url: `/api/download/${taskId}`,
+        method: "GET",
+        headers: {
+          Accept: "application/octet-stream",
+        },
+        responseType: "blob",
+      });
 
-      if (!response.ok) {
-        throw new Error(
-          `Download failed: ${response.status} ${response.statusText}`,
-        );
+      if (error || !data || !headers) {
+        throw new Error(`Download failed: ${taskId}`);
       }
 
-      const filename =
-        parseFilenameFromContentDisposition(
-          response.headers.get("Content-Disposition"),
-        ) ?? `converted-${taskId}`;
+      const disposition = headers["content-disposition"];
 
-      const blob = await response.blob();
-      downloadBlob(blob, filename);
+      const filename =
+        parseFilenameFromContentDisposition(disposition) ??
+        `converted-${taskId}`;
+
+      downloadBlob(data, filename);
     },
     onError: () => {
       toast.error("Download failed. Please try again.");

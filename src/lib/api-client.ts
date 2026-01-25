@@ -1,6 +1,12 @@
-import axios, { type AxiosRequestConfig } from "axios";
+import axios, {
+  type AxiosRequestConfig,
+  type AxiosResponseHeaders,
+  type RawAxiosResponseHeaders,
+} from "axios";
 
-type ApiResult<T> = [T, null] | [null, unknown];
+type AxiosHeaders = RawAxiosResponseHeaders | AxiosResponseHeaders;
+
+type ApiResult<T> = [T, null, AxiosHeaders] | [null, unknown, null];
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,9 +17,9 @@ const apiRequest = async <T>(
 ): Promise<ApiResult<T>> => {
   try {
     const response = await apiClient.request<T>(config);
-    return [response.data, null];
+    return [response.data, null, response.headers];
   } catch (error) {
-    return [null, error];
+    return [null, error, null];
   }
 };
 
