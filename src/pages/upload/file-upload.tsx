@@ -55,9 +55,19 @@ const FileUpload: FC<Props> = () => {
     useCustomStart,
     useCustomEnd,
     codec,
+    resetToDefaults,
   } = useConversionStore();
   const outputFormat = codec.toLowerCase();
   const quality = getQualityFromBitrate(bitrate);
+
+  const resetFlow = () => {
+    setSelectedFile(null);
+    setTaskId(null);
+    setTaskStatus(null);
+    setTaskProgress(0);
+    setIsTaskCompleted(false);
+    resetToDefaults();
+  };
 
   useEffect(() => {
     if (!taskId) return;
@@ -135,10 +145,6 @@ const FileUpload: FC<Props> = () => {
 
   const handleFileSelect = (file: File) => {
     setIsPreparing(true);
-    setTaskId(null);
-    setTaskStatus(null);
-    setTaskProgress(0);
-    setIsTaskCompleted(false);
     setSelectedFile(file);
     requestAnimationFrame(() => setIsPreparing(false));
   };
@@ -231,20 +237,24 @@ const FileUpload: FC<Props> = () => {
       </FileDropzone>
       <div className="flex justify-end gap-2">
         {isTaskCompleted && taskId ? (
+          <>
+            <Button
+              disabled={isDownloading}
+              onClick={() => download({ taskId })}
+              variant="secondary"
+            >
+              {isDownloading ? "Downloading..." : "Download"}
+            </Button>
+            <Button onClick={resetFlow}>Convert more</Button>
+          </>
+        ) : (
           <Button
-            disabled={isDownloading}
-            onClick={() => download({ taskId })}
-            variant="secondary"
+            disabled={!selectedFile || isUploading || !!taskId}
+            onClick={handleConvert}
           >
-            {isDownloading ? "Downloading..." : "Download"}
+            Convert
           </Button>
-        ) : null}
-        <Button
-          disabled={!selectedFile || isUploading || !!taskId}
-          onClick={handleConvert}
-        >
-          Convert
-        </Button>
+        )}
       </div>
     </div>
   );
