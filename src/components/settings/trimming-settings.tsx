@@ -132,7 +132,7 @@ export function TrimmingSettings() {
             <Checkbox
               id="trim-enable"
               checked={enableTrim}
-              onCheckedChange={(checked) => setEnableTrim(checked as boolean)}
+              onCheckedChange={(checked) =>setEnableTrim(!!checked)}
               className="border-gray-600 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
             />
             <div className="space-y-1">
