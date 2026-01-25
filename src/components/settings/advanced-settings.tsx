@@ -11,11 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import {
   BIT_DEPTH_OPTIONS,
   METADATA_OPTIONS,
+  isPcmFormat,
   useConversionStore,
 } from "@/stores/conversionStore";
 
 export function AdvancedSettings() {
   const {
+    codec,
     bitDepth,
     metadata,
     gain,
@@ -28,30 +30,45 @@ export function AdvancedSettings() {
     setEnableNormalizePeak,
   } = useConversionStore();
 
+  const isBitDepthEnabled = isPcmFormat(codec);
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols- gap-6">
+      <div className="md:grid-cols- grid grid-cols-1 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
           {/* Bit Depth */}
           <div className="space-y-3">
-            <Label htmlFor="bitDepth" className="text-sm font-medium text-gray-300">
+            <Label
+              htmlFor="bitDepth"
+              className="text-sm font-medium text-gray-300"
+            >
               Bit Depth
+              {!isBitDepthEnabled && (
+                <span className="ml-2 text-xs text-gray-500">
+                  (Only available for WAV, FLAC, AIFF)
+                </span>
+              )}
             </Label>
             <Select
               value={bitDepth}
               onValueChange={(value: any) => setBitDepth(value)}
+              disabled={!isBitDepthEnabled}
             >
-              <SelectTrigger 
-                id="bitDepth" 
-                className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-750 hover:border-gray-600"
+              <SelectTrigger
+                id="bitDepth"
+                className={`hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white hover:border-gray-600 ${
+                  !isBitDepthEnabled
+                    ? "cursor-not-allowed border-gray-700/50 bg-gray-800/50 text-gray-500 opacity-50"
+                    : ""
+                }`}
               >
                 <SelectValue placeholder="Select bit depth" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectContent className="border-gray-700 bg-gray-800 text-white">
                 {BIT_DEPTH_OPTIONS.map((option) => (
-                  <SelectItem 
-                    key={option.value} 
+                  <SelectItem
+                    key={option.value}
                     value={option.value}
                     className="hover:bg-gray-700 focus:bg-gray-700"
                   >
@@ -64,23 +81,26 @@ export function AdvancedSettings() {
 
           {/* Metadata */}
           <div className="space-y-3">
-            <Label htmlFor="metadata" className="text-sm font-medium text-gray-300">
+            <Label
+              htmlFor="metadata"
+              className="text-sm font-medium text-gray-300"
+            >
               Metadata
             </Label>
             <Select
               value={metadata}
               onValueChange={(value: any) => setMetadata(value)}
             >
-              <SelectTrigger 
-                id="metadata" 
-                className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-750 hover:border-gray-600"
+              <SelectTrigger
+                id="metadata"
+                className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white hover:border-gray-600"
               >
                 <SelectValue placeholder="Select metadata option" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectContent className="border-gray-700 bg-gray-800 text-white">
                 {METADATA_OPTIONS.map((option) => (
-                  <SelectItem 
-                    key={option.value} 
+                  <SelectItem
+                    key={option.value}
                     value={option.value}
                     className="hover:bg-gray-700 focus:bg-gray-700"
                   >
@@ -106,14 +126,12 @@ export function AdvancedSettings() {
                 value={gain > 0 ? `+${gain}db` : `${gain}db`}
                 onChange={(e) => {
                   const value = e.target.value;
-                  const numValue = parseFloat(
-                    value.replace(/[^0-9.-]+/g, ""),
-                  );
+                  const numValue = parseFloat(value.replace(/[^0-9.-]+/g, ""));
                   if (!isNaN(numValue)) {
                     setGain(numValue);
                   }
                 }}
-                className="w-full bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 hover:bg-gray-750 hover:border-gray-600 pr-10"
+                className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 pr-10 text-white placeholder:text-gray-500 hover:border-gray-600"
                 placeholder="0db"
               />
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -132,14 +150,14 @@ export function AdvancedSettings() {
                   onCheckedChange={setEnableNormalizePeak}
                   className="data-[state=checked]:bg-blue-600"
                 />
-                <Label 
-                  htmlFor="enable-normalize" 
-                  className="text-sm font-medium text-gray-300 cursor-pointer"
+                <Label
+                  htmlFor="enable-normalize"
+                  className="cursor-pointer text-sm font-medium text-gray-300"
                 >
                   Normalize Max Peak to:
                 </Label>
               </div>
-              
+
               <div className="relative w-[100px]">
                 <Input
                   type="text"
@@ -153,7 +171,7 @@ export function AdvancedSettings() {
                       setNormalizePeak(numValue);
                     }
                   }}
-                  className="w-full bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 hover:bg-gray-750 hover:border-gray-600 pr-10 text-center"
+                  className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 pr-10 text-center text-white placeholder:text-gray-500 hover:border-gray-600"
                   placeholder="Disabled"
                   disabled={!enableNormalizePeak}
                 />

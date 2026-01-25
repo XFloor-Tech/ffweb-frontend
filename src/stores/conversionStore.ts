@@ -23,7 +23,7 @@ export interface ConversionStore {
   bitrate: BitrateType;
   sampleRate: SampleRateType;
   channels: ChannelsType;
-   useCustomStart: boolean;
+  useCustomStart: boolean;
   useCustomEnd: boolean;
 
   // Advanced Settings
@@ -52,7 +52,7 @@ export interface ConversionStore {
   setEndTime: (time: string) => void;
   resetToDefaults: () => void;
   getFFmpegCommand: () => string;
-   setUseCustomStart: (use: boolean) => void;
+  setUseCustomStart: (use: boolean) => void;
   setUseCustomEnd: (use: boolean) => void;
 }
 
@@ -103,6 +103,20 @@ export const METADATA_OPTIONS = [
   { value: "Clear", label: "Clear All" },
 ] as const;
 
+// PCM formats that support bit depth
+export const PCM_FORMATS: ReadonlySet<CodecType> = new Set([
+  "WAV",
+  "FLAC",
+  "AIFF",
+] as const);
+
+/**
+ * Check if a codec format is PCM (supports bit depth)
+ */
+export const isPcmFormat = (codec: CodecType): boolean => {
+  return PCM_FORMATS.has(codec);
+};
+
 const DEFAULT_SETTINGS = {
   codec: "AAC" as CodecType,
   bitrate: "320k" as BitrateType,
@@ -114,10 +128,10 @@ const DEFAULT_SETTINGS = {
   normalizePeak: -3, // -3db
   enableNormalizePeak: true, // or false based on your preference
   enableTrim: false,
-    useCustomStart: true,
+  useCustomStart: true,
   useCustomEnd: true,
-  startTime: '0125120', // MMSSmmm format (01:25:120)
-  endTime: '0000000',   // Default end time
+  startTime: "0125120", // MMSSmmm format (01:25:120)
+  endTime: "0000000", // Default end time
 };
 
 export const useConversionStore = create<ConversionStore>()(
@@ -138,7 +152,7 @@ export const useConversionStore = create<ConversionStore>()(
       setEnableTrim: (enableTrim) => set({ enableTrim }),
       setStartTime: (startTime) => set({ startTime }),
       setUseCustomStart: (useCustomStart) => set({ useCustomStart }),
-setUseCustomEnd: (useCustomEnd) => set({ useCustomEnd }),
+      setUseCustomEnd: (useCustomEnd) => set({ useCustomEnd }),
       setEndTime: (endTime) => set({ endTime }),
 
       resetToDefaults: () => set(DEFAULT_SETTINGS),
