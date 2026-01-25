@@ -1,8 +1,5 @@
-import { Settings } from "lucide-react";
 import type { FC } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { UploadSettings } from "@/components/upload-settings";
 import { FileUpload } from "./file-upload";
 
@@ -18,20 +15,6 @@ const UploadPage: FC<Props> = () => {
       <section className="hidden min-h-screen w-full xl:block xl:max-w-[432px]">
         <UploadSettings />
       </section>
-
-      <div className="w-14 rounded-xl border border-gray-800 bg-gray-900/40 p-2 xl:hidden">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button aria-label="Open settings" size="icon" variant="ghost">
-              <Settings className="size-5 text-gray-50" />
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent className="max-h-screen overflow-auto">
-            <UploadSettings />
-          </DialogContent>
-        </Dialog>
-      </div>
     </div>
   );
 };
