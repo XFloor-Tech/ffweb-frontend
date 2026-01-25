@@ -29,9 +29,9 @@ const Track: FC<Props> = ({ data, status }) => {
         <span>{data?.name ?? "Unnamed"}</span>
       </div>
 
-      <div className="flex items-center gap-6">
-        {!!status && <Badge variant={statusClasses}>{statusLabel}</Badge>}
+      {!!status && <Badge variant={statusClasses}>{statusLabel}</Badge>}
 
+      <div className="flex items-center gap-6">
         {!!data?.codec && (
           <div className="flex flex-col items-center gap-1">
             <FileType size={24} className="text-primary" strokeWidth={1} />
