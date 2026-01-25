@@ -1,7 +1,5 @@
 import { useEffect, useState, type FC } from "react";
 
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Track } from "@/components/track";
 import { Button } from "@/components/ui/button";
@@ -10,6 +8,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { API_BASE_URL } from "@/lib/api-client";
 import { streamSse } from "@/lib/sse";
 import { useConversionStore } from "@/stores/conversionStore";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
@@ -18,7 +18,11 @@ import {
   TOAST_MESSAGES,
   TrackStatus,
 } from "./constants";
-import { downloadMutationOptions, getTaskStatus, uploadMutationOptions } from "./queries";
+import {
+  downloadMutationOptions,
+  getTaskStatus,
+  uploadMutationOptions,
+} from "./queries";
 import { formatFileSize, getFileFormat, getQualityFromBitrate } from "./utils";
 
 type Props = Record<string, never>;
@@ -183,7 +187,10 @@ const FileUpload: FC<Props> = () => {
         return;
       }
 
-      if (task.status === TaskStatus.Processing || task.status === TaskStatus.Pending) {
+      if (
+        task.status === TaskStatus.Processing ||
+        task.status === TaskStatus.Pending
+      ) {
         setSseAttempt((value) => value + 1);
         return;
       }
@@ -261,13 +268,15 @@ const FileUpload: FC<Props> = () => {
       taskStatus !== TaskStatus.Failed &&
       taskStatus !== TaskStatus.Cancelled &&
       !isTaskCompleted;
-    const progressLabel =
-      isTaskCompleted
-        ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Completed] ?? DEFAULT_PROGRESS_LABEL)
-        : taskStatus === TaskStatus.Cancelled
-          ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Cancelled] ?? DEFAULT_PROGRESS_LABEL)
-          : taskStatus === TaskStatus.Failed
-            ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Failed] ?? DEFAULT_PROGRESS_LABEL)
+    const progressLabel = isTaskCompleted
+      ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Completed] ??
+        DEFAULT_PROGRESS_LABEL)
+      : taskStatus === TaskStatus.Cancelled
+        ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Cancelled] ??
+          DEFAULT_PROGRESS_LABEL)
+        : taskStatus === TaskStatus.Failed
+          ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Failed] ??
+            DEFAULT_PROGRESS_LABEL)
           : DEFAULT_PROGRESS_LABEL;
 
     return (
@@ -289,6 +298,8 @@ const FileUpload: FC<Props> = () => {
 
   return (
     <div className="flex h-full w-full flex-col gap-6 rounded-xl border border-gray-800 bg-gray-900/40 p-6">
+      <span className="text-h4 text-gray-50">File To Convert</span>
+
       <FileDropzone
         selectedFile={selectedFile}
         onFileSelect={handleFileSelect}
@@ -304,15 +315,21 @@ const FileUpload: FC<Props> = () => {
               onClick={() => download({ taskId })}
               variant="secondary"
             >
-              {isDownloading ? BUTTON_LABELS.downloading : BUTTON_LABELS.download}
+              {isDownloading
+                ? BUTTON_LABELS.downloading
+                : BUTTON_LABELS.download}
             </Button>
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
         ) : taskStatus === TaskStatus.Error ||
-            taskStatus === TaskStatus.Failed ||
-            taskStatus === TaskStatus.Cancelled ? (
+          taskStatus === TaskStatus.Failed ||
+          taskStatus === TaskStatus.Cancelled ? (
           <>
-            <Button disabled={isRetrying} onClick={handleRetry} variant="secondary">
+            <Button
+              disabled={isRetrying}
+              onClick={handleRetry}
+              variant="secondary"
+            >
               {isRetrying ? BUTTON_LABELS.retrying : BUTTON_LABELS.retry}
             </Button>
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
