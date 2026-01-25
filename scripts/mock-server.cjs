@@ -284,6 +284,8 @@ app.get("/api/download/:id", (req, res) => {
     "Content-Disposition",
     `attachment; filename="${task.output_file_path.split("/").pop()}"`,
   );
+
+  // res.status(400).json({ error: "Конвертация не завершена" });
   res.send(Buffer.from("Mock converted file content"));
 });
 

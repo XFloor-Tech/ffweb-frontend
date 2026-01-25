@@ -5,13 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FileAudio, Scissors, Settings2, Sliders } from "lucide-react";
 
@@ -20,7 +14,11 @@ import { AdvancedSettings } from "./advanced-settings";
 import { BasicSettings } from "./basic-settings";
 import { TrimmingSettings } from "./trimming-settings";
 
-export function ConversionSettings() {
+type Props = {
+  className?: string;
+};
+
+export function ConversionSettings({ className }: Props) {
   const { resetToDefaults } = useConversionStore();
 
   return (
@@ -40,7 +38,7 @@ export function ConversionSettings() {
               onClick={resetToDefaults}
               variant="outline"
               size="sm"
-              className="border-gray-700 text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white active:bg-gray-900 bg-gray-700"
+              className="border-gray-700 bg-gray-700 text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white active:bg-gray-900"
             >
               Reset to Defaults
             </Button>
