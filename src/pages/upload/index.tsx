@@ -1,5 +1,6 @@
-import { Settings } from "lucide-react";
 import type { FC } from "react";
+
+import { Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -11,9 +12,10 @@ type Props = Record<string, never>;
 const UploadPage: FC<Props> = () => {
   return (
     <div className="flex gap-4">
-      <section className="h-[calc(100vh-16rem)]  w-full 4xl:max-w-[960px]">
+      <section className="min-h-screen w-full 4xl:max-w-[960px]">
         <FileUpload />
       </section>
+
       <section className="hidden min-h-screen w-full xl:block xl:max-w-[432px]">
         <UploadSettings />
       </section>
