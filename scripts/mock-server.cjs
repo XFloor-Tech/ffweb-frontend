@@ -223,7 +223,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
   // Start conversion simulation
   simulateConversion(taskId);
 
-  res.status(400).json({ error: "Invalid quality" });
+  // res.status(400).json({ error: "Invalid quality" });
   res.status(201).json({
     task_id: taskId,
     status: "processing",

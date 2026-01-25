@@ -247,6 +247,8 @@ const FileUpload: FC<Props> = () => {
             </Button>
             <Button onClick={resetFlow}>Convert more</Button>
           </>
+        ) : taskStatus === "error" ? (
+          <Button onClick={resetFlow}>Convert more</Button>
         ) : (
           <Button
             disabled={!selectedFile || isUploading || !!taskId}
