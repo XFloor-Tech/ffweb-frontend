@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { UploadSettings } from "@/components/upload-settings";
 import { FileUpload } from "./file-upload";
 
-type Props = {};
+type Props = Record<string, never>;
 
 const UploadPage: FC<Props> = () => {
   return (

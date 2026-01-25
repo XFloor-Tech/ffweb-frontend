@@ -3,7 +3,7 @@ import axios, { type AxiosRequestConfig } from "axios";
 type ApiResult<T> = [T, null] | [null, unknown];
 
 const baseURL = import.meta.env.DEV
-  ? "http://5.189.254.222:8080"
+  ? "http://localhost:3001"
   : import.meta.env.VITE_API_BASE_URL;
 
 const apiClient = axios.create({ baseURL, timeout: 1000 * 60 });
@@ -19,4 +19,4 @@ const apiRequest = async <T>(
   }
 };
 
-export { apiRequest };
+export { baseURL as API_BASE_URL, apiRequest };
