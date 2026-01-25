@@ -13,8 +13,6 @@ export function TrimmingSettings() {
     enableTrim,
     startTime,
     endTime,
-    useCustomStart,
-    useCustomEnd,
     setEnableTrim,
     setStartTime,
     setEndTime,
@@ -125,121 +123,97 @@ export function TrimmingSettings() {
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Checkbox
-                id="trim-enable"
-                checked={enableTrim}
-                onCheckedChange={(checked) => setEnableTrim(checked as boolean)}
-              />
-              <div className="space-y-1">
-                <Label
-                  htmlFor="trim-enable"
-                  className="cursor-pointer text-base font-medium"
-                >
-                  Trim
-                </Label>
-              </div>
+    <div className="space-y-6">
+      <div>
+        <h4 className="text-lg font-medium text-white mb-4">Trim Settings</h4>
+        <div className="space-y-6">
+          {/* Enable Trim */}
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="trim-enable"
+              checked={enableTrim}
+              onCheckedChange={(checked) => setEnableTrim(checked as boolean)}
+              className="border-gray-600 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+            />
+            <div className="space-y-1">
+              <Label
+                htmlFor="trim-enable"
+                className="cursor-pointer text-base font-medium text-gray-300"
+              >
+                Trim
+              </Label>
             </div>
-
-            {enableTrim && (
-              <>
-                <Separator />
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Trim Range</Label>
-                  </div>
-
-                  <div className="py-4">
-                    <Slider
-                      value={[sliderRange[0], sliderRange[1]]}
-                      onValueChange={handleSliderChange}
-                      min={0}
-                      max={maxDuration}
-                      step={100}
-                      className="w-full"
-                    />
-
-                    <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-                      <span>{msToDisplay(0)}</span>
-                      <span>{msToDisplay(maxDuration / 2)}</span>
-                      <span>{msToDisplay(maxDuration)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label
-                        htmlFor="start-time"
-                        className="text-sm font-medium"
-                      >
-                        Start Time
-                      </Label>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="start-time"
-                        type="text"
-                        value={
-                          useCustomStart ? formatTimeForInput(startTime) : ""
-                        }
-                        onChange={(e) =>
-                          handleTimeInputChange("start", e.target.value)
-                        }
-                        placeholder="00:05:517"
-                        className="text-center font-mono"
-                        disabled={!useCustomStart}
-                      />
-                      {!useCustomStart && (
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                          <span className="text-sm text-muted-foreground">
-                            --:--:---
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="end-time" className="text-sm font-medium">
-                        End Time
-                      </Label>
-                    </div>
-
-                    <div className="relative">
-                      <Input
-                        id="end-time"
-                        type="text"
-                        value={useCustomEnd ? formatTimeForInput(endTime) : ""}
-                        onChange={(e) =>
-                          handleTimeInputChange("end", e.target.value)
-                        }
-                        placeholder="01:25:120"
-                        className="text-center font-mono"
-                        disabled={!useCustomEnd}
-                      />
-                      {!useCustomEnd && (
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                          <span className="text-sm text-muted-foreground">
-                            --:--:---
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
-        </CardContent>
-      </Card>
+
+          {enableTrim && (
+            <>
+              <Separator className="bg-gray-800" />
+            
+
+              {/* Visual Slider */}
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-gray-300">Trim Range</Label>
+                </div>
+
+                <div className="py-4">
+                  <Slider
+                    value={[sliderRange[0], sliderRange[1]]}
+                    onValueChange={handleSliderChange}
+                    min={0}
+                    max={maxDuration}
+                    step={100}
+                    className="w-full"
+                  />
+
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>{msToDisplay(0)}</span>
+                    <span>{msToDisplay(maxDuration / 2)}</span>
+                    <span>{msToDisplay(maxDuration)}</span>
+                  </div>
+                </div>
+              </div>
+
+                            {/* Time Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Start Time */}
+                <div className="space-y-3">
+                  <Label htmlFor="start-time" className="text-sm font-medium text-gray-300">
+                    Start Time
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="start-time"
+                      type="text"
+                      value={formatTimeForInput(startTime)}
+                      onChange={(e) => handleTimeInputChange("start", e.target.value)}
+                      placeholder="00:05:517"
+                      className="text-center font-mono bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 hover:bg-gray-750 hover:border-gray-600"
+                    />
+                  </div>
+                </div>
+                
+                {/* End Time */}
+                <div className="space-y-3">
+                  <Label htmlFor="end-time" className="text-sm font-medium text-gray-300">
+                    End Time
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="end-time"
+                      type="text"
+                      value={formatTimeForInput(endTime)}
+                      onChange={(e) => handleTimeInputChange("end", e.target.value)}
+                      placeholder="01:25:120"
+                      className="text-center font-mono bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 hover:bg-gray-750 hover:border-gray-600"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
