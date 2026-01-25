@@ -2,6 +2,7 @@ enum TaskStatus {
   Cancelled = "cancelled",
   Completed = "completed",
   Error = "error",
+  Failed = "failed",
   Pending = "pending",
   Processing = "processing",
 }
@@ -15,6 +16,7 @@ enum TrackStatus {
 const PROGRESS_LABEL_BY_TASK_STATUS: Partial<Record<TaskStatus, string>> = {
   [TaskStatus.Completed]: "Completed",
   [TaskStatus.Cancelled]: "Cancelled",
+  [TaskStatus.Failed]: "Failed",
 };
 
 const DEFAULT_PROGRESS_LABEL = "Converting";

@@ -122,7 +122,9 @@ const FileUpload: FC<Props> = () => {
 
             if (
               maybeStatus === TaskStatus.Completed ||
-              maybeStatus === TaskStatus.Cancelled
+              maybeStatus === TaskStatus.Cancelled ||
+              maybeStatus === TaskStatus.Failed ||
+              maybeStatus === TaskStatus.Error
             ) {
               controller.abort();
             }
@@ -235,6 +237,7 @@ const FileUpload: FC<Props> = () => {
     ? {
         name: selectedFile.name,
         codec: getFileFormat(selectedFile),
+        convertedCodec: outputFormat,
         size: formatFileSize(selectedFile.size),
       }
     : null;
@@ -245,7 +248,7 @@ const FileUpload: FC<Props> = () => {
     }
 
     const trackStatus =
-      taskStatus === TaskStatus.Error
+      taskStatus === TaskStatus.Error || taskStatus === TaskStatus.Failed
         ? TrackStatus.Error
         : isTaskCompleted
           ? TrackStatus.Done
@@ -253,12 +256,18 @@ const FileUpload: FC<Props> = () => {
             ? TrackStatus.Converting
             : undefined;
     const showProgress =
-      !!taskId && taskStatus !== TaskStatus.Error && !isTaskCompleted;
+      !!taskId &&
+      taskStatus !== TaskStatus.Error &&
+      taskStatus !== TaskStatus.Failed &&
+      taskStatus !== TaskStatus.Cancelled &&
+      !isTaskCompleted;
     const progressLabel =
       isTaskCompleted
         ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Completed] ?? DEFAULT_PROGRESS_LABEL)
         : taskStatus === TaskStatus.Cancelled
           ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Cancelled] ?? DEFAULT_PROGRESS_LABEL)
+          : taskStatus === TaskStatus.Failed
+            ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Failed] ?? DEFAULT_PROGRESS_LABEL)
           : DEFAULT_PROGRESS_LABEL;
 
     return (
@@ -299,7 +308,9 @@ const FileUpload: FC<Props> = () => {
             </Button>
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
-        ) : taskStatus === TaskStatus.Error || taskStatus === TaskStatus.Cancelled ? (
+        ) : taskStatus === TaskStatus.Error ||
+            taskStatus === TaskStatus.Failed ||
+            taskStatus === TaskStatus.Cancelled ? (
           <>
             <Button disabled={isRetrying} onClick={handleRetry} variant="secondary">
               {isRetrying ? BUTTON_LABELS.retrying : BUTTON_LABELS.retry}

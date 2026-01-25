@@ -1,11 +1,14 @@
-import { AudioLines, FileType, HardDrive } from "lucide-react";
 import type { FC } from "react";
+
+import { AudioLines, FileType, HardDrive } from "lucide-react";
+
 import { Badge } from "./ui/badge";
 
 type Props = {
   data?: {
     name: string;
     codec?: string;
+    convertedCodec?: string;
     size?: string;
   };
   status?: "converting" | "done" | "error";
@@ -36,6 +39,15 @@ const Track: FC<Props> = ({ data, status }) => {
           <div className="flex flex-col items-center gap-1">
             <FileType size={24} className="text-primary" strokeWidth={1} />
             <span>{data.codec}</span>
+          </div>
+        )}
+
+        {status === "done" && !!data?.convertedCodec && (
+          <div className="flex flex-col items-center gap-1">
+            <FileType size={24} className="text-emerald-400" strokeWidth={1} />
+            <span className="text-emerald-300">
+              {data.convertedCodec.toUpperCase()}
+            </span>
           </div>
         )}
 

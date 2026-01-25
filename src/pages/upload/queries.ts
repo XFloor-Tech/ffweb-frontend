@@ -7,6 +7,8 @@ import {
   parseFilenameFromContentDisposition,
 } from "@/lib/download";
 
+import { appendFfmpegGoOptionsToFormData, type UploadOptions } from "./ffmpeg-options";
+
 const uploadQueryKeys = {
   upload: () => ["upload"],
   taskStatus: (taskId: string) => ["taskStatus", taskId],
@@ -29,22 +31,6 @@ type TaskStatusResponse = {
   updated_at: string;
 };
 
-type UploadOptions = {
-  bitrate: string;
-  sampleRate: string;
-  channels: string;
-  bitDepth: string;
-  metadata: string;
-  gain: number;
-  normalizePeak: number;
-  enableNormalizePeak: boolean;
-  enableTrim: boolean;
-  startTime: string;
-  endTime: string;
-  useCustomStart: boolean;
-  useCustomEnd: boolean;
-};
-
 type UploadPayload = {
   file: File;
   outputFormat: string;
@@ -60,12 +46,12 @@ type UploadMutationCallbacks = {
 const uploadMutationOptions = (callbacks?: UploadMutationCallbacks) =>
   mutationOptions({
     mutationKey: uploadQueryKeys.upload(),
-    mutationFn: async ({ file, outputFormat, quality }: UploadPayload) => {
+    mutationFn: async ({ file, outputFormat, quality, options }: UploadPayload) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("output_format", outputFormat);
       formData.append("quality", quality);
-      // formData.append("options", JSON.stringify(options));
+      appendFfmpegGoOptionsToFormData(formData, options);
 
       const [data, error] = await apiRequest<UploadResponse>({
         method: "POST",
