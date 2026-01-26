@@ -1,6 +1,6 @@
 import type { FC } from "react";
 
-import { UploadSettings } from "@/components/upload-settings";
+import { ConversionSettings } from "@/components/settings/conversion-settings";
 import { FileUpload } from "./file-upload";
 
 type Props = Record<string, never>;
@@ -13,7 +13,7 @@ const UploadPage: FC<Props> = () => {
       </section>
 
       <section className="hidden min-h-screen w-full xl:block xl:max-w-[432px]">
-        <UploadSettings />
+        <ConversionSettings className="min-h-[calc(100%-4rem)]" />;
       </section>
     </div>
   );

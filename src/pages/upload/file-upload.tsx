@@ -1,18 +1,18 @@
-import { useEffect, useState, type FC } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
+import { useEffect, useState, type FC } from "react";
 import { toast } from "sonner";
 
 import { FileDropzone } from "@/components/file-dropzone";
+import { BasicSettings } from "@/components/settings/basic-settings";
 import { Track } from "@/components/track";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { UploadSettings } from "@/components/upload-settings";
 import { API_BASE_URL } from "@/lib/api-client";
 import { streamSse } from "@/lib/sse";
-import { useConversionStore } from "@/stores/conversionStore";
+import { useConversionStore } from "@/store/conversion-store";
 import {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
@@ -321,7 +321,7 @@ const FileUpload: FC<Props> = () => {
             </DialogTrigger>
 
             <DialogContent className="max-h-screen overflow-auto">
-              <UploadSettings />
+              <BasicSettings />
             </DialogContent>
           </Dialog>
         </div>

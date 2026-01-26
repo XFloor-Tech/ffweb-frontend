@@ -1,11 +1,9 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { useConversionStore } from "@/stores/conversionStore";
-import { Scissors } from "lucide-react";
+import { useConversionStore } from "@/store/conversion-store";
 import { useEffect, useState } from "react";
 
 export function TrimmingSettings() {
@@ -125,15 +123,15 @@ export function TrimmingSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h4 className="text-lg font-medium text-white mb-4">Trim Settings</h4>
+        <h4 className="mb-4 text-lg font-medium text-white">Trim Settings</h4>
         <div className="space-y-6">
           {/* Enable Trim */}
           <div className="flex items-center gap-3">
             <Checkbox
               id="trim-enable"
               checked={enableTrim}
-              onCheckedChange={(checked) =>setEnableTrim(!!checked)}
-              className="border-gray-600 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+              onCheckedChange={(checked) => setEnableTrim(!!checked)}
+              className="border-gray-600 data-[state=checked]:border-amber-600 data-[state=checked]:bg-amber-600"
             />
             <div className="space-y-1">
               <Label
@@ -148,12 +146,13 @@ export function TrimmingSettings() {
           {enableTrim && (
             <>
               <Separator className="bg-gray-800" />
-            
 
               {/* Visual Slider */}
               <div className="space-y-4 pt-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-gray-300">Trim Range</Label>
+                  <Label className="text-sm font-medium text-gray-300">
+                    Trim Range
+                  </Label>
                 </div>
 
                 <div className="py-4">
@@ -174,11 +173,14 @@ export function TrimmingSettings() {
                 </div>
               </div>
 
-                            {/* Time Inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Time Inputs */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Start Time */}
                 <div className="space-y-3">
-                  <Label htmlFor="start-time" className="text-sm font-medium text-gray-300">
+                  <Label
+                    htmlFor="start-time"
+                    className="text-sm font-medium text-gray-300"
+                  >
                     Start Time
                   </Label>
                   <div className="relative">
@@ -186,16 +188,21 @@ export function TrimmingSettings() {
                       id="start-time"
                       type="text"
                       value={formatTimeForInput(startTime)}
-                      onChange={(e) => handleTimeInputChange("start", e.target.value)}
+                      onChange={(e) =>
+                        handleTimeInputChange("start", e.target.value)
+                      }
                       placeholder="00:05:517"
-                      className="text-center font-mono bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 hover:bg-gray-750 hover:border-gray-600"
+                      className="hover:bg-gray-750 border-gray-700 bg-gray-800 text-center font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
                     />
                   </div>
                 </div>
-                
+
                 {/* End Time */}
                 <div className="space-y-3">
-                  <Label htmlFor="end-time" className="text-sm font-medium text-gray-300">
+                  <Label
+                    htmlFor="end-time"
+                    className="text-sm font-medium text-gray-300"
+                  >
                     End Time
                   </Label>
                   <div className="relative">
@@ -203,9 +210,11 @@ export function TrimmingSettings() {
                       id="end-time"
                       type="text"
                       value={formatTimeForInput(endTime)}
-                      onChange={(e) => handleTimeInputChange("end", e.target.value)}
+                      onChange={(e) =>
+                        handleTimeInputChange("end", e.target.value)
+                      }
                       placeholder="01:25:120"
-                      className="text-center font-mono bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 hover:bg-gray-750 hover:border-gray-600"
+                      className="hover:bg-gray-750 border-gray-700 bg-gray-800 text-center font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
                     />
                   </div>
                 </div>
@@ -217,3 +226,4 @@ export function TrimmingSettings() {
     </div>
   );
 }
+
