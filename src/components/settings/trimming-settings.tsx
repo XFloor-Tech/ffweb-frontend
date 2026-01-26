@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { useConversionStore } from "@/store/conversion-store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function TrimmingSettings() {
   const {
@@ -58,9 +58,9 @@ export function TrimmingSettings() {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${milliseconds.toString().padStart(3, "0")}`;
   };
 
-  const parseDisplayToMs = (display: string): number => {
+  const parseDisplayToMs = useCallback((display: string): number => {
     return timeToMs(display);
-  };
+  }, []);
 
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 0]);
   const [maxDuration, setMaxDuration] = useState(300000);
@@ -74,8 +74,10 @@ export function TrimmingSettings() {
       setEndTime(msToDisplay(validEndMs));
     }
 
+    // TODO: handle outside of use effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- later.
     setSliderRange([startMs, validEndMs]);
-  }, [startTime, endTime]);
+  }, [endTime, parseDisplayToMs, setEndTime, startTime]);
 
   const handleSliderChange = (value: number[]) => {
     if (value.length === 2) {
@@ -124,6 +126,7 @@ export function TrimmingSettings() {
     <div className="space-y-6">
       <div>
         <h4 className="mb-4 text-lg font-medium text-white">Trim Settings</h4>
+
         <div className="space-y-6">
           {/* Enable Trim */}
           <div className="flex items-center gap-3">
@@ -133,6 +136,7 @@ export function TrimmingSettings() {
               onCheckedChange={(checked) => setEnableTrim(!!checked)}
               className="border-gray-600 data-[state=checked]:border-amber-600 data-[state=checked]:bg-amber-600"
             />
+
             <div className="space-y-1">
               <Label
                 htmlFor="trim-enable"
@@ -183,6 +187,7 @@ export function TrimmingSettings() {
                   >
                     Start Time
                   </Label>
+
                   <div className="relative">
                     <Input
                       id="start-time"
@@ -205,6 +210,7 @@ export function TrimmingSettings() {
                   >
                     End Time
                   </Label>
+
                   <div className="relative">
                     <Input
                       id="end-time"
@@ -226,4 +232,3 @@ export function TrimmingSettings() {
     </div>
   );
 }
-

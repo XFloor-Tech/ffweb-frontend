@@ -1,12 +1,12 @@
 import { DEFAULT_SETTINGS } from "@/constants/conversion-constants";
 import type {
-  BitDepthType,
-  BitrateType,
-  ChannelsType,
-  CodecType,
+  BitDepth,
+  Bitrate,
+  Channels,
+  Codec,
   ConversionSettings,
-  MetadataType,
-  SampleRateType,
+  Metadata,
+  SampleRate,
 } from "@/types/conversion-types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -14,12 +14,12 @@ import { persist } from "zustand/middleware";
 export type ConversionStore = ConversionSettings & {
   enableNormalizePeak: boolean;
   // Actions
-  setCodec: (codec: CodecType) => void;
-  setBitrate: (bitrate: BitrateType) => void;
-  setSampleRate: (sampleRate: SampleRateType) => void;
-  setChannels: (channels: ChannelsType) => void;
-  setBitDepth: (bitDepth: BitDepthType) => void;
-  setMetadata: (metadata: MetadataType) => void;
+  setCodec: (codec: Codec) => void;
+  setBitrate: (bitrate: Bitrate) => void;
+  setSampleRate: (sampleRate: SampleRate) => void;
+  setChannels: (channels: Channels) => void;
+  setBitDepth: (bitDepth: BitDepth) => void;
+  setMetadata: (metadata: Metadata) => void;
   setGain: (gain: number) => void;
   setNormalizePeak: (peak: number) => void;
   setEnableTrim: (enable: boolean) => void;

@@ -1,4 +1,4 @@
-export type CodecType =
+export type Codec =
   | "AAC"
   | "M4A"
   | "OGG"
@@ -8,7 +8,7 @@ export type CodecType =
   | "WAV"
   | "AIFF";
 
-export type BitrateType =
+export type Bitrate =
   | "64k"
   | "96k"
   | "128k"
@@ -17,30 +17,30 @@ export type BitrateType =
   | "256k"
   | "320k";
 
-export type SampleRateType = "44.1kHz" | "48kHz" | "96kHz" | "192kHz";
+export type SampleRate = "44.1kHz" | "48kHz" | "96kHz" | "192kHz";
 
-export type ChannelsType = "1 (Mono)" | "2 (Stereo)" | "5.1" | "7.1";
-export type BitDepthType = "16" | "24" | "32" | "float";
-export type MetadataType = "Preserve" | "Remove" | "Clear";
-export type GainType = number;
-export type PeakType = number;
+export type Channels = "1 (Mono)" | "2 (Stereo)" | "5.1" | "7.1";
+export type BitDepth = "16" | "24" | "32" | "float";
+export type Metadata = "Preserve" | "Remove" | "Clear";
+export type Gain = number;
+export type Peak = number;
 
 // Time format HH:MM:SS.mmm or MM:SS.mmm or SS.mmm
 export type TimeFormat = string;
 
 export type BasicConversionSettings = {
-  codec: CodecType;
-  bitrate: BitrateType;
-  sampleRate: SampleRateType;
-  channels: ChannelsType;
-  selectedFormat?: CodecType;
+  codec: Codec;
+  bitrate: Bitrate;
+  sampleRate: SampleRate;
+  channels: Channels;
+  selectedFormat?: Codec;
 };
 
 export type AdvancedAudioSettings = {
-  bitDepth: BitDepthType;
-  metadata: MetadataType;
-  gain: GainType;
-  normalizePeak: PeakType;
+  bitDepth: BitDepth;
+  metadata: Metadata;
+  gain: Gain;
+  normalizePeak: Peak;
 };
 
 export type TrimmingSettings = {

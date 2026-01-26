@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FileAudio, Scissors, Settings2, Sliders } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { useConversionStore } from "@/store/conversion-store";
 import { AdvancedSettings } from "./advanced-settings";
 import { BasicSettings } from "./basic-settings";
@@ -22,7 +23,12 @@ function ConversionSettings({ className }: Props) {
   const { resetToDefaults } = useConversionStore();
 
   return (
-    <Card className="mx-auto h-full w-full max-w-4xl border-gray-950 bg-gray-900 text-white">
+    <Card
+      className={cn(
+        "mx-auto h-full w-full max-w-4xl border-gray-950 bg-gray-900 text-white",
+        className,
+      )}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -53,7 +59,7 @@ function ConversionSettings({ className }: Props) {
       <CardContent className="pt-6">
         <Accordion
           type="multiple"
-          defaultValue={["basic", "advanced", "trimming"]}
+          defaultValue={["basic"]}
           className="w-full space-y-4"
         >
           {/* Basic Settings Accordion Item */}
