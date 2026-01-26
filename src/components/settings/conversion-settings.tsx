@@ -1,3 +1,6 @@
+import { FileAudio, Scissors, Settings2, Sliders } from "lucide-react";
+import type { FC } from "react";
+
 import {
   Accordion,
   AccordionContent,
@@ -7,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { FileAudio, Scissors, Settings2, Sliders } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useConversionStore } from "@/store/conversion-store";
@@ -19,7 +21,21 @@ type Props = {
   className?: string;
 };
 
-function ConversionSettings({ className }: Props) {
+// https://www.totaltypescript.com/erasable-syntax-only#what-does-erasablesyntaxonly-do
+// Enums are not being used here because we have erasableSyntaxOnly=true in our tsconfig file.
+// This means that the enum values are not being erased during compilation, which is bad for bundlers.
+// So it's better to use a const object instead of enums!!!
+const accordionValues = {
+  BASIC: "basic",
+  ADVANCED: "advanced",
+  TRIMMING: "trimming",
+} as const;
+
+type AccordionValue = (typeof accordionValues)[keyof typeof accordionValues];
+
+const DEFAULT_ACCORDION_VALUE: AccordionValue[] = [accordionValues.BASIC];
+
+const ConversionSettings: FC<Props> = ({ className }) => {
   const { resetToDefaults } = useConversionStore();
 
   return (
@@ -59,12 +75,12 @@ function ConversionSettings({ className }: Props) {
       <CardContent className="pt-6">
         <Accordion
           type="multiple"
-          defaultValue={["basic"]}
+          defaultValue={DEFAULT_ACCORDION_VALUE}
           className="w-full space-y-4"
         >
           {/* Basic Settings Accordion Item */}
           <AccordionItem
-            value="basic"
+            value={accordionValues.BASIC}
             className="rounded-lg border border-gray-800 bg-gray-900"
           >
             <AccordionTrigger className="rounded-t-lg px-4 py-4 hover:bg-gray-800/50 hover:no-underline">
@@ -91,7 +107,7 @@ function ConversionSettings({ className }: Props) {
 
           {/* Advanced Settings Accordion Item */}
           <AccordionItem
-            value="advanced"
+            value={accordionValues.ADVANCED}
             className="rounded-lg border border-gray-800 bg-gray-900"
           >
             <AccordionTrigger className="rounded-t-lg px-4 py-4 hover:bg-gray-800/50 hover:no-underline">
@@ -116,7 +132,7 @@ function ConversionSettings({ className }: Props) {
 
           {/* Trimming Settings Accordion Item */}
           <AccordionItem
-            value="trimming"
+            value={accordionValues.TRIMMING}
             className="rounded-lg border border-gray-800 bg-gray-900"
           >
             <AccordionTrigger className="rounded-t-lg px-4 py-4 hover:bg-gray-800/50 hover:no-underline">
@@ -142,5 +158,5 @@ function ConversionSettings({ className }: Props) {
       </CardContent>
     </Card>
   );
-}
+};
 export { ConversionSettings };

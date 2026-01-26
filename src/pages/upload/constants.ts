@@ -1,17 +1,21 @@
-enum TaskStatus {
-  Cancelled = "cancelled",
-  Completed = "completed",
-  Error = "error",
-  Failed = "failed",
-  Pending = "pending",
-  Processing = "processing",
-}
+const TaskStatus = {
+  Cancelled: "cancelled",
+  Completed: "completed",
+  Error: "error",
+  Failed: "failed",
+  Pending: "pending",
+  Processing: "processing",
+} as const;
 
-enum TrackStatus {
-  Converting = "converting",
-  Done = "done",
-  Error = "error",
-}
+type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
+
+const TrackStatus = {
+  Converting: "converting",
+  Done: "done",
+  Error: "error",
+} as const;
+
+type TrackStatus = (typeof TrackStatus)[keyof typeof TrackStatus];
 
 const PROGRESS_LABEL_BY_TASK_STATUS: Partial<Record<TaskStatus, string>> = {
   [TaskStatus.Completed]: "Completed",
@@ -38,7 +42,7 @@ export {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
   PROGRESS_LABEL_BY_TASK_STATUS,
-  TaskStatus,
   TOAST_MESSAGES,
+  TaskStatus,
   TrackStatus,
 };

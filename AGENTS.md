@@ -59,6 +59,22 @@ const WishDialog: FC<Props> = ({ data, editable, onSubmit }) => { ... };
 export { WishDialog };
 ```
 
+- Enums are not allowed, use objects instead, because we have `erasableSyntaxOnly=true` in our tsconfig file.
+
+Example:
+
+```ts
+const accordionValues = {
+  BASIC: "basic",
+  ADVANCED: "advanced",
+  TRIMMING: "trimming",
+} as const;
+
+type AccordionValue = (typeof accordionValues)[keyof typeof accordionValues];
+
+const DEFAULT_ACCORDION_VALUE: AccordionValue[] = [accordionValues.BASIC];
+```
+
 ### Naming Conventions
 
 - Components: PascalCase (`WishCard`, `FieldEditDialog`)
