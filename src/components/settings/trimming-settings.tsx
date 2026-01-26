@@ -1,12 +1,27 @@
+import { useEffect, useState, type FC } from "react";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 import { useConversionStore } from "@/store/conversion-store";
-import { useCallback, useEffect, useState } from "react";
 
-export function TrimmingSettings() {
+import {
+  formatTrimTimeForInput,
+  msToTrimDisplay,
+  normalizeTrimTimeInput,
+  parseTrimTimeToMs,
+} from "./utils";
+
+const MAX_DURATION_MS = 300_000;
+
+type Props = {
+  className?: string;
+};
+
+const TrimmingSettings: FC<Props> = ({ className }) => {
   const {
     enableTrim,
     startTime,
@@ -16,93 +31,38 @@ export function TrimmingSettings() {
     setEndTime,
   } = useConversionStore();
 
-  const timeToMs = (timeStr: string): number => {
-    if (!timeStr || timeStr.trim() === "") return 0;
-
-    const cleanTime = timeStr.replace(/[^0-9:]/g, "");
-
-    const parts = cleanTime.split(":").filter((part) => part !== "");
-
-    if (parts.length === 3) {
-      const minutes = parseInt(parts[0]) || 0;
-      const seconds = parseInt(parts[1]) || 0;
-
-      let milliseconds = parseInt(parts[2]) || 0;
-      if (parts[2].length === 2) {
-        milliseconds = milliseconds * 10;
-      } else if (parts[2].length === 1) {
-        milliseconds = milliseconds * 100;
-      }
-
-      return (minutes * 60 + seconds) * 1000 + milliseconds;
-    } else if (parts.length === 2) {
-      const minutes = parseInt(parts[0]) || 0;
-      const seconds = parseInt(parts[1]) || 0;
-      return (minutes * 60 + seconds) * 1000;
-    } else if (parts.length === 1) {
-      const seconds = parseInt(parts[0]) || 0;
-      return seconds * 1000;
-    }
-
-    return 0;
-  };
-
-  const msToDisplay = (ms: number): string => {
-    if (ms < 0) ms = 0;
-
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const milliseconds = ms % 1000;
-
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${milliseconds.toString().padStart(3, "0")}`;
-  };
-
-  const parseDisplayToMs = useCallback((display: string): number => {
-    return timeToMs(display);
-  }, []);
-
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 0]);
-  const [maxDuration, setMaxDuration] = useState(300000);
 
   useEffect(() => {
-    const startMs = parseDisplayToMs(startTime);
-    const endMs = parseDisplayToMs(endTime);
+    const startMs = parseTrimTimeToMs(startTime);
+    const endMs = parseTrimTimeToMs(endTime);
 
     const validEndMs = endMs > startMs ? endMs : startMs + 1000;
     if (endMs <= startMs) {
-      setEndTime(msToDisplay(validEndMs));
+      setEndTime(msToTrimDisplay(validEndMs));
     }
 
     // TODO: handle outside of use effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- later.
     setSliderRange([startMs, validEndMs]);
-  }, [endTime, parseDisplayToMs, setEndTime, startTime]);
+  }, [endTime, setEndTime, startTime]);
 
   const handleSliderChange = (value: number[]) => {
     if (value.length === 2) {
       const [newStart, newEnd] = value;
 
       if (newStart < newEnd) {
-        setStartTime(msToDisplay(newStart));
-        setEndTime(msToDisplay(newEnd));
+        setStartTime(msToTrimDisplay(newStart));
+        setEndTime(msToTrimDisplay(newEnd));
       } else if (newStart >= newEnd) {
-        setStartTime(msToDisplay(newStart));
-        setEndTime(msToDisplay(newStart + 1000));
+        setStartTime(msToTrimDisplay(newStart));
+        setEndTime(msToTrimDisplay(newStart + 1000));
       }
     }
   };
 
   const handleTimeInputChange = (type: "start" | "end", value: string) => {
-    const cleaned = value.replace(/[^0-9:]/g, "");
-
-    let formatted = cleaned;
-    if (cleaned.length > 2) {
-      formatted = cleaned.slice(0, 2) + ":" + cleaned.slice(2);
-    }
-    if (cleaned.length > 4) {
-      formatted = formatted.slice(0, 5) + ":" + formatted.slice(5, 8);
-    }
+    const formatted = normalizeTrimTimeInput(value);
 
     if (type === "start") {
       setStartTime(formatted);
@@ -111,19 +71,8 @@ export function TrimmingSettings() {
     }
   };
 
-  const formatTimeForInput = (timeStr: string): string => {
-    if (!timeStr || timeStr.trim() === "") return "";
-
-    if (timeStr.match(/^\d{2}:\d{2}:\d{3}$/)) {
-      return timeStr;
-    }
-
-    const ms = parseDisplayToMs(timeStr);
-    return msToDisplay(ms);
-  };
-
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-6", className)}>
       <div>
         <h4 className="mb-4 text-lg font-medium text-white">Trim Settings</h4>
 
@@ -164,15 +113,15 @@ export function TrimmingSettings() {
                     value={[sliderRange[0], sliderRange[1]]}
                     onValueChange={handleSliderChange}
                     min={0}
-                    max={maxDuration}
+                    max={MAX_DURATION_MS}
                     step={100}
                     className="w-full"
                   />
 
                   <div className="mt-2 flex justify-between text-xs text-gray-500">
-                    <span>{msToDisplay(0)}</span>
-                    <span>{msToDisplay(maxDuration / 2)}</span>
-                    <span>{msToDisplay(maxDuration)}</span>
+                    <span>{msToTrimDisplay(0)}</span>
+                    <span>{msToTrimDisplay(MAX_DURATION_MS / 2)}</span>
+                    <span>{msToTrimDisplay(MAX_DURATION_MS)}</span>
                   </div>
                 </div>
               </div>
@@ -192,7 +141,7 @@ export function TrimmingSettings() {
                     <Input
                       id="start-time"
                       type="text"
-                      value={formatTimeForInput(startTime)}
+                      value={formatTrimTimeForInput(startTime)}
                       onChange={(e) =>
                         handleTimeInputChange("start", e.target.value)
                       }
@@ -215,7 +164,7 @@ export function TrimmingSettings() {
                     <Input
                       id="end-time"
                       type="text"
-                      value={formatTimeForInput(endTime)}
+                      value={formatTrimTimeForInput(endTime)}
                       onChange={(e) =>
                         handleTimeInputChange("end", e.target.value)
                       }
@@ -231,4 +180,6 @@ export function TrimmingSettings() {
       </div>
     </div>
   );
-}
+};
+
+export { TrimmingSettings };

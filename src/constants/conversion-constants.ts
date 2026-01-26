@@ -66,7 +66,7 @@ export const METADATA_OPTIONS = [
 
 export const DEFAULT_SETTINGS = {
   codec: "AAC",
-  bitrate: "320k",
+  bitrate: "128k",
   sampleRate: "48kHz",
   channels: "2 (Stereo)",
   bitDepth: "32",
