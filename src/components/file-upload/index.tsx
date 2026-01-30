@@ -4,7 +4,6 @@ import { useEffect, type FC } from "react";
 import { toast } from "sonner";
 
 import { FileDropzone } from "@/components/file-dropzone";
-import { BasicSettings } from "@/components/settings/basic-settings";
 import { Track } from "@/components/track";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -25,6 +24,7 @@ import {
   getFalsyTaskStatus,
   getTrackStatusFromTaskStatus,
 } from "@/utils/file-status";
+import { ConversionSettings } from "../settings/conversion-settings";
 import {
   downloadMutationOptions,
   useGetTaskStatusMutation,
@@ -249,7 +249,7 @@ const FileUpload: FC<Props> = () => {
             </DialogTrigger>
 
             <DialogContent className="max-h-screen overflow-auto">
-              <BasicSettings />
+              <ConversionSettings />
             </DialogContent>
           </Dialog>
         </div>
