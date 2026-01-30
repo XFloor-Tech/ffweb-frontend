@@ -1,10 +1,11 @@
+import type { TaskStatus } from "@/types/file-types";
 import { create } from "zustand";
 
 export type FileStore = {
   selectedFile: File | null;
   isPreparing: boolean;
   taskId: string | null;
-  taskStatus: string | null;
+  taskStatus: TaskStatus | null;
   taskProgress: number;
   isTaskCompleted: boolean;
   isRetrying: boolean;
@@ -13,7 +14,7 @@ export type FileStore = {
   setSelectedFile: (file: File | null) => void;
   setIsPreparing: (isPreparing: boolean) => void;
   setTaskId: (taskId: string | null) => void;
-  setTaskStatus: (taskStatus: string | null) => void;
+  setTaskStatus: (taskStatus: TaskStatus | null) => void;
   setTaskProgress: (taskProgress: number) => void;
   setIsTaskCompleted: (isTaskCompleted: boolean) => void;
   setIsRetrying: (isRetrying: boolean) => void;

@@ -9,6 +9,7 @@ import {
 
 import { useFileStore } from "@/store/file-store";
 import type { ConversionSettings } from "@/types/conversion-types";
+import type { TaskStatus } from "@/types/file-types";
 import { appendFfmpegGoOptionsToFormData } from "./ffmpeg-options";
 import type { TaskStatusResponse } from "./types";
 
@@ -20,7 +21,7 @@ const uploadQueryKeys = {
 
 type UploadResponse = {
   task_id: string;
-  status: string;
+  status: TaskStatus;
 };
 
 type UploadPayload = {

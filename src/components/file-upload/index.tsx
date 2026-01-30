@@ -10,18 +10,21 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { API_BASE_URL } from "@/lib/api-client";
-import { streamSse } from "@/lib/sse";
-import { useConversionStore } from "@/store/conversion-store";
-import { useFileStore } from "@/store/file-store";
 import {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
   PROGRESS_LABEL_BY_TASK_STATUS,
   TaskStatus,
   TOAST_MESSAGES,
-  TrackStatus,
-} from "./constants";
+} from "@/constants/file-constants";
+import { API_BASE_URL } from "@/lib/api-client";
+import { streamSse } from "@/lib/sse";
+import { useConversionStore } from "@/store/conversion-store";
+import { useFileStore } from "@/store/file-store";
+import {
+  getFalsyTaskStatus,
+  getTrackStatusFromTaskStatus,
+} from "@/utils/file-status";
 import {
   downloadMutationOptions,
   getTaskStatus,
@@ -190,8 +193,7 @@ const FileUpload: FC<Props> = () => {
   const handleFileSelect = (file: File) => {
     setIsPreparing(true);
     setSelectedFile(file);
-    // what is this for nigga
-    requestAnimationFrame(() => setIsPreparing(false));
+    setIsPreparing(false);
   };
 
   const handleConvert = () => {
@@ -227,32 +229,19 @@ const FileUpload: FC<Props> = () => {
       return null;
     }
 
-    const trackStatus =
-      taskStatus === TaskStatus.Error || taskStatus === TaskStatus.Failed
-        ? TrackStatus.Error
-        : isTaskCompleted
-          ? TrackStatus.Done
-          : taskId
-            ? TrackStatus.Converting
-            : undefined;
+    const trackStatus = taskStatus
+      ? getTrackStatusFromTaskStatus(taskStatus)
+      : undefined;
 
     const showProgress =
       !!taskId &&
-      taskStatus !== TaskStatus.Error &&
-      taskStatus !== TaskStatus.Failed &&
-      taskStatus !== TaskStatus.Cancelled &&
+      !!taskStatus &&
+      !getFalsyTaskStatus(taskStatus) &&
       !isTaskCompleted;
 
-    const progressLabel = isTaskCompleted
-      ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Completed] ??
-        DEFAULT_PROGRESS_LABEL)
-      : taskStatus === TaskStatus.Cancelled
-        ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Cancelled] ??
-          DEFAULT_PROGRESS_LABEL)
-        : taskStatus === TaskStatus.Failed
-          ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Failed] ??
-            DEFAULT_PROGRESS_LABEL)
-          : DEFAULT_PROGRESS_LABEL;
+    const progressLabel = taskStatus
+      ? PROGRESS_LABEL_BY_TASK_STATUS[taskStatus]
+      : DEFAULT_PROGRESS_LABEL;
 
     return (
       <>
@@ -299,7 +288,7 @@ const FileUpload: FC<Props> = () => {
           </Dialog>
         </div>
 
-        {isTaskCompleted && taskId ? (
+        {isTaskCompleted && taskId && (
           <>
             <Button
               disabled={isDownloading}
@@ -312,9 +301,9 @@ const FileUpload: FC<Props> = () => {
             </Button>
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
-        ) : taskStatus === TaskStatus.Error ||
-          taskStatus === TaskStatus.Failed ||
-          taskStatus === TaskStatus.Cancelled ? (
+        )}
+
+        {!isTaskCompleted && !!taskStatus && getFalsyTaskStatus(taskStatus) && (
           <>
             <Button
               disabled={isRetrying}
@@ -325,7 +314,9 @@ const FileUpload: FC<Props> = () => {
             </Button>
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
-        ) : (
+        )}
+
+        {!isTaskCompleted && (
           <Button
             disabled={!selectedFile || isUploading || !!taskId}
             onClick={handleConvert}
