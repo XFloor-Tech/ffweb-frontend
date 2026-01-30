@@ -7,12 +7,14 @@ import {
   parseFilenameFromContentDisposition,
 } from "@/lib/download";
 
-import { appendFfmpegGoOptionsToFormData, type UploadOptions } from "./ffmpeg-options";
+import type { ConversionSettings } from "@/types/conversion-types";
+import { appendFfmpegGoOptionsToFormData } from "./ffmpeg-options";
+import type { TaskStatusResponse } from "./types";
 
 const uploadQueryKeys = {
   upload: () => ["upload"],
   taskStatus: (taskId: string) => ["taskStatus", taskId],
-  download: (taskId: string) => ["download", taskId],
+  download: () => ["download"],
 } as const;
 
 type UploadResponse = {
@@ -20,22 +22,11 @@ type UploadResponse = {
   status: string;
 };
 
-type TaskStatusResponse = {
-  id: string;
-  input_file_path: string;
-  output_file_path: string;
-  status: string;
-  progress: number;
-  error: string;
-  created_at: string;
-  updated_at: string;
-};
-
 type UploadPayload = {
   file: File;
   outputFormat: string;
   quality: string;
-  options: UploadOptions;
+  options: ConversionSettings;
 };
 
 type UploadMutationCallbacks = {
@@ -46,7 +37,12 @@ type UploadMutationCallbacks = {
 const uploadMutationOptions = (callbacks?: UploadMutationCallbacks) =>
   mutationOptions({
     mutationKey: uploadQueryKeys.upload(),
-    mutationFn: async ({ file, outputFormat, quality, options }: UploadPayload) => {
+    mutationFn: async ({
+      file,
+      outputFormat,
+      quality,
+      options,
+    }: UploadPayload) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("output_format", outputFormat);
@@ -104,9 +100,8 @@ type DownloadPayload = {
 
 const downloadMutationOptions = () =>
   mutationOptions({
-    mutationKey: ["download"],
+    mutationKey: uploadQueryKeys.download(),
     mutationFn: async ({ taskId }: DownloadPayload) => {
-      // const response = await fetch(`${API_BASE_URL}/api/download/${taskId}`);
       const [data, error, headers] = await apiRequest<Blob>({
         url: `/api/download/${taskId}`,
         method: "GET",

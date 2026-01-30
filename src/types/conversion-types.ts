@@ -57,4 +57,5 @@ export type ConversionSettings = BasicConversionSettings &
   TrimmingSettings & {
     showAdvanced: boolean;
     showTrimming: boolean;
+    enableNormalizePeak: boolean;
   };

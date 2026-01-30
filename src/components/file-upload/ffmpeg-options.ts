@@ -1,18 +1,4 @@
-type UploadOptions = {
-  bitrate: string;
-  sampleRate: string;
-  channels: string;
-  bitDepth: string;
-  metadata: string;
-  gain: number;
-  normalizePeak: number;
-  enableNormalizePeak: boolean;
-  enableTrim: boolean;
-  startTime: string;
-  endTime: string;
-  useCustomStart: boolean;
-  useCustomEnd: boolean;
-};
+import type { BitDepth, ConversionSettings } from "@/types/conversion-types";
 
 type FfmpegGoOptions = {
   "b:a"?: string;
@@ -108,7 +94,7 @@ const parseTimeDisplayToFfmpegTime = (timeStr: string) => {
   return formatMsToFfmpegTime(ms);
 };
 
-const getSampleFormatFromBitDepth = (bitDepth: string) => {
+const getSampleFormatFromBitDepth = (bitDepth: BitDepth) => {
   if (bitDepth === "16") return "s16";
   if (bitDepth === "24") return "s24";
   if (bitDepth === "32") return "s32";
@@ -116,7 +102,7 @@ const getSampleFormatFromBitDepth = (bitDepth: string) => {
   return null;
 };
 
-const buildFfmpegGoOptions = (options: UploadOptions): FfmpegGoOptions => {
+const buildFfmpegGoOptions = (options: ConversionSettings): FfmpegGoOptions => {
   const outputOptions: FfmpegGoOptions = {};
 
   if (options.bitrate) {
@@ -188,7 +174,7 @@ const buildFfmpegGoOptions = (options: UploadOptions): FfmpegGoOptions => {
 
 const appendFfmpegGoOptionsToFormData = (
   formData: FormData,
-  options: UploadOptions,
+  options: ConversionSettings,
 ) => {
   const outputOptions = buildFfmpegGoOptions(options);
 
@@ -213,4 +199,3 @@ export {
   buildFfmpegGoOptions,
   type FfmpegGoOptions,
 };
-export type { UploadOptions };

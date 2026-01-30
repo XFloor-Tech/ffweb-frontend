@@ -44,6 +44,7 @@ const FileUpload: FC<Props> = () => {
   const [isTaskCompleted, setIsTaskCompleted] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [sseAttempt, setSseAttempt] = useState(0);
+
   const { mutate: upload, isPending: isUploading } = useMutation(
     uploadMutationOptions({
       onError: () => setSelectedFile(null),
@@ -59,25 +60,11 @@ const FileUpload: FC<Props> = () => {
   const { mutate: download, isPending: isDownloading } = useMutation(
     downloadMutationOptions(),
   );
-  const {
-    bitrate,
-    sampleRate,
-    channels,
-    bitDepth,
-    metadata,
-    gain,
-    normalizePeak,
-    enableNormalizePeak,
-    enableTrim,
-    startTime,
-    endTime,
-    useCustomStart,
-    useCustomEnd,
-    codec,
-    resetToDefaults,
-  } = useConversionStore();
-  const outputFormat = codec.toLowerCase();
-  const quality = getQualityFromBitrate(bitrate);
+
+  const conversionSettings = useConversionStore();
+
+  const outputFormat = conversionSettings.codec.toLowerCase();
+  const quality = getQualityFromBitrate(conversionSettings.bitrate);
 
   const resetFlow = () => {
     setSelectedFile(null);
@@ -87,12 +74,11 @@ const FileUpload: FC<Props> = () => {
     setIsTaskCompleted(false);
     setIsRetrying(false);
     setSseAttempt(0);
-    resetToDefaults();
+    conversionSettings.resetToDefaults();
   };
 
   useEffect(() => {
-    if (!taskId) return;
-    if (isTaskCompleted) return;
+    if (!taskId || isTaskCompleted) return;
 
     const controller = new AbortController();
     const url = `${API_BASE_URL}/api/events/${taskId}`;
@@ -149,9 +135,8 @@ const FileUpload: FC<Props> = () => {
   }, [isTaskCompleted, sseAttempt, taskId]);
 
   useEffect(() => {
-    if (!taskId) return;
-    if (taskStatus !== TaskStatus.Completed) return;
-    if (isTaskCompleted) return;
+    if (!taskId || taskStatus !== TaskStatus.Completed || isTaskCompleted)
+      return;
 
     const run = async () => {
       try {
@@ -225,21 +210,7 @@ const FileUpload: FC<Props> = () => {
       file: selectedFile,
       outputFormat,
       quality,
-      options: {
-        bitrate,
-        sampleRate,
-        channels,
-        bitDepth,
-        metadata,
-        gain,
-        normalizePeak,
-        enableNormalizePeak,
-        enableTrim,
-        startTime,
-        endTime,
-        useCustomStart,
-        useCustomEnd,
-      },
+      options: conversionSettings,
     });
   };
 
