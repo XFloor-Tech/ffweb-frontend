@@ -2,6 +2,7 @@ import type { FC } from "react";
 
 import { AudioLines, FileType, HardDrive } from "lucide-react";
 
+import { TrackStatus as TrackStatusMap } from "@/constants/file-constants";
 import type { TrackStatus } from "@/types/file-types";
 import { Badge } from "./ui/badge";
 
@@ -43,7 +44,7 @@ const Track: FC<Props> = ({ data, status }) => {
           </div>
         )}
 
-        {status === "done" && !!data?.convertedCodec && (
+        {status === TrackStatusMap.Done && !!data?.convertedCodec && (
           <div className="flex flex-col items-center gap-1">
             <FileType size={24} className="text-emerald-400" strokeWidth={1} />
             <span className="text-emerald-300">

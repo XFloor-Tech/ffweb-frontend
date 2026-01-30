@@ -35,15 +35,10 @@ const BUTTON_LABELS = {
   retrying: "Retrying...",
 } as const;
 
-const TOAST_MESSAGES = {
-  noTaskSelected: "No task selected. Start a conversion first.",
-} as const;
-
 export {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
   PROGRESS_LABEL_BY_TASK_STATUS,
   TaskStatus,
-  TOAST_MESSAGES,
   TrackStatus,
 };

@@ -1,6 +1,7 @@
+import { useEffect, type FC } from "react";
+
 import { useMutation } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
-import { useEffect, type FC } from "react";
 import { toast } from "sonner";
 
 import { FileDropzone } from "@/components/file-dropzone";
@@ -9,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { ALERT_TEXT } from "@/constants/alert";
+import { API_ENDPOINTS } from "@/constants/api";
 import {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
   PROGRESS_LABEL_BY_TASK_STATUS,
   TaskStatus,
-  TOAST_MESSAGES,
 } from "@/constants/file-constants";
 import { streamSse } from "@/lib/sse";
 import { useConversionStore } from "@/store/conversion-store";
@@ -81,12 +83,11 @@ const FileUpload: FC<Props> = () => {
     if (!taskId || isTaskCompleted) return;
 
     const controller = new AbortController();
-    const url = `/api/events/${taskId}`;
 
     const run = async () => {
       try {
         await streamSse({
-          url,
+          url: API_ENDPOINTS.events(taskId),
           signal: controller.signal,
           onEvent: ({ data }) => {
             let parsed: unknown;
@@ -150,7 +151,7 @@ const FileUpload: FC<Props> = () => {
 
   const handleRetry = async () => {
     if (!taskId) {
-      toast.error(TOAST_MESSAGES.noTaskSelected);
+      toast.error(ALERT_TEXT.fileUpload.noTaskSelectedToast);
       return;
     }
 

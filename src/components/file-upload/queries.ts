@@ -1,13 +1,15 @@
 import { mutationOptions, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { ALERT_TEXT } from "@/constants/alert";
+import { API_ENDPOINTS } from "@/constants/api";
+import { TaskStatus as TaskStatusMap } from "@/constants/file-constants";
 import { apiRequest } from "@/lib/api-client";
 import {
   downloadBlob,
   parseFilenameFromContentDisposition,
 } from "@/lib/download";
 
-import { TaskStatus as TaskStatusMap } from "@/constants/file-constants";
 import { useFileStore } from "@/store/file-store";
 import type { ConversionSettings } from "@/types/conversion-types";
 import type { TaskStatus } from "@/types/file-types";
@@ -58,7 +60,7 @@ const useUploadMutation = () => {
 
       const [data, error] = await apiRequest<UploadResponse>({
         method: "POST",
-        url: "/api/upload",
+        url: API_ENDPOINTS.upload,
         data: formData,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -83,7 +85,7 @@ const useUploadMutation = () => {
       setSseAttempt(0);
     },
     onError: () => {
-      toast.error("Upload failed. Please try again.");
+      toast.error(ALERT_TEXT.fileUpload.uploadFailedToast);
       setSelectedFile(null);
     },
   });
@@ -92,7 +94,7 @@ const useUploadMutation = () => {
 const getTaskStatus = async (taskId: string) => {
   const [data, error] = await apiRequest<TaskStatusResponse>({
     method: "GET",
-    url: `/api/task/${taskId}`,
+    url: API_ENDPOINTS.taskStatus(taskId),
   });
 
   if (error) {
@@ -119,7 +121,7 @@ const useGetTaskStatusMutation = () => {
     mutationFn: (taskId: string) => getTaskStatus(taskId),
     onError: () => {
       setTaskStatus(TaskStatusMap.Error);
-      toast.error("Task status failed. Please try again.");
+      toast.error(ALERT_TEXT.fileUpload.taskStatusFailedToast);
     },
     onSuccess: (task) => {
       setTaskStatus(task.status);
@@ -151,7 +153,7 @@ const downloadMutationOptions = () =>
     mutationKey: uploadQueryKeys.download(),
     mutationFn: async ({ taskId }: DownloadPayload) => {
       const [data, error, headers] = await apiRequest<Blob>({
-        url: `/api/download/${taskId}`,
+        url: API_ENDPOINTS.download(taskId),
         method: "GET",
         headers: {
           Accept: "application/octet-stream",
@@ -172,7 +174,7 @@ const downloadMutationOptions = () =>
       downloadBlob(data, filename);
     },
     onError: () => {
-      toast.error("Download failed. Please try again.");
+      toast.error(ALERT_TEXT.fileUpload.downloadFailedToast);
     },
   });
 

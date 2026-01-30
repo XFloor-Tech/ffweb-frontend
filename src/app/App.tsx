@@ -1,12 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useRef } from "react";
+
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { healthQueryOptions } from "@/app/queries";
 import { Header } from "@/components/layout/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
+import { ALERT_TEXT } from "@/constants/alert";
 import { UploadPage } from "@/pages/upload";
 
 const App: FC = () => {
@@ -17,7 +19,7 @@ const App: FC = () => {
 
   useEffect(() => {
     if (isError && !hasShownError.current) {
-      toast.error("Mock server unavailable.");
+      toast.error(ALERT_TEXT.app.mockServerUnavailableToast);
       hasShownError.current = true;
     }
 
@@ -41,9 +43,11 @@ const App: FC = () => {
         <main>
           {!isHealthy && (
             <Alert variant="destructive">
-              <AlertTitle>We couldn't reach the server</AlertTitle>
+              <AlertTitle>
+                {ALERT_TEXT.app.serverUnreachableAlert.title}
+              </AlertTitle>
               <AlertDescription>
-                Please start the mock server and reload the page.
+                {ALERT_TEXT.app.serverUnreachableAlert.description}
               </AlertDescription>
             </Alert>
           )}
