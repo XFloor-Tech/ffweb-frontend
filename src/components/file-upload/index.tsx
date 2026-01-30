@@ -17,7 +17,6 @@ import {
   TaskStatus,
   TOAST_MESSAGES,
 } from "@/constants/file-constants";
-import { API_BASE_URL } from "@/lib/api-client";
 import { streamSse } from "@/lib/sse";
 import { useConversionStore } from "@/store/conversion-store";
 import { useFileStore } from "@/store/file-store";
@@ -28,7 +27,7 @@ import {
 } from "@/utils/file-status";
 import {
   downloadMutationOptions,
-  getTaskStatus,
+  useGetTaskStatusMutation,
   useUploadMutation,
 } from "./queries";
 import { formatFileSize, getFileFormat, getQualityFromBitrate } from "./utils";
@@ -48,23 +47,23 @@ const FileUpload: FC<Props> = () => {
     taskStatus,
     taskProgress,
     isTaskCompleted,
-    isRetrying,
     sseAttempt,
     setIsPreparing,
-    setIsRetrying,
     setIsTaskCompleted,
     setSelectedFile,
     setSseAttempt,
     setTaskId,
     setTaskProgress,
     setTaskStatus,
-    incrementSseAttempt,
     resetToDefaults: resetFileState,
   } = useFileStore();
 
   const conversionSettings = useConversionStore();
 
   const { mutate: upload, isPending: isUploading } = useUploadMutation();
+
+  const { mutate: getTaskStatus, isPending: isTaskStatusPending } =
+    useGetTaskStatusMutation();
 
   const { mutate: download, isPending: isDownloading } = useMutation(
     downloadMutationOptions(),
@@ -82,7 +81,7 @@ const FileUpload: FC<Props> = () => {
     if (!taskId || isTaskCompleted) return;
 
     const controller = new AbortController();
-    const url = `${API_BASE_URL}/api/events/${taskId}`;
+    const url = `/api/events/${taskId}`;
 
     const run = async () => {
       try {
@@ -133,26 +132,21 @@ const FileUpload: FC<Props> = () => {
     return () => controller.abort();
   }, [isTaskCompleted, setTaskProgress, setTaskStatus, sseAttempt, taskId]);
 
+  // Gets status on sse finish and based on that sets task status.
+  // TODO: move to a sse finish callback logic instead of effect??
   useEffect(() => {
     if (!taskId || taskStatus !== TaskStatus.Completed || isTaskCompleted)
       return;
 
-    const run = async () => {
-      try {
-        const task = await getTaskStatus(taskId);
-        if (task.status === TaskStatus.Completed) {
-          setIsTaskCompleted(true);
-          return;
-        }
-
-        setTaskStatus(task.status);
-      } catch {
-        setTaskStatus(TaskStatus.Error);
-      }
-    };
-
-    run();
-  }, [isTaskCompleted, setIsTaskCompleted, setTaskStatus, taskId, taskStatus]);
+    getTaskStatus(taskId);
+  }, [
+    getTaskStatus,
+    isTaskCompleted,
+    setIsTaskCompleted,
+    setTaskStatus,
+    taskId,
+    taskStatus,
+  ]);
 
   const handleRetry = async () => {
     if (!taskId) {
@@ -160,33 +154,7 @@ const FileUpload: FC<Props> = () => {
       return;
     }
 
-    setIsRetrying(true);
-
-    try {
-      const task = await getTaskStatus(taskId);
-      setTaskStatus(task.status);
-
-      if (typeof task.progress === "number") {
-        setTaskProgress(Math.min(100, Math.max(0, Math.floor(task.progress))));
-      }
-
-      if (task.status === TaskStatus.Completed) {
-        setIsTaskCompleted(true);
-        return;
-      }
-
-      if (
-        task.status === TaskStatus.Processing ||
-        task.status === TaskStatus.Pending
-      ) {
-        incrementSseAttempt();
-        return;
-      }
-    } catch {
-      setTaskStatus(TaskStatus.Error);
-    } finally {
-      setIsRetrying(false);
-    }
+    getTaskStatus(taskId);
   };
 
   const handleFileSelect = (file: File) => {
@@ -204,7 +172,6 @@ const FileUpload: FC<Props> = () => {
     setTaskStatus(null);
     setTaskProgress(0);
     setIsTaskCompleted(false);
-    setIsRetrying(false);
     setSseAttempt(0);
     upload({
       file: selectedFile,
@@ -306,14 +273,16 @@ const FileUpload: FC<Props> = () => {
         {!isTaskCompleted && getFalsyTaskStatus(taskStatus) && (
           <>
             <Button
-              disabled={isRetrying}
+              disabled={isTaskStatusPending}
               onClick={handleRetry}
               variant="secondary"
             >
-              {isRetrying ? BUTTON_LABELS.retrying : BUTTON_LABELS.retry}
+              {isTaskStatusPending
+                ? BUTTON_LABELS.retrying
+                : BUTTON_LABELS.retry}
             </Button>
 
-            <Button onClick={resetFlow} disabled={isRetrying}>
+            <Button onClick={resetFlow} disabled={isTaskStatusPending}>
               {BUTTON_LABELS.convertMore}
             </Button>
           </>

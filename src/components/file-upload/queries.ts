@@ -7,6 +7,7 @@ import {
   parseFilenameFromContentDisposition,
 } from "@/lib/download";
 
+import { TaskStatus as TaskStatusMap } from "@/constants/file-constants";
 import { useFileStore } from "@/store/file-store";
 import type { ConversionSettings } from "@/types/conversion-types";
 import type { TaskStatus } from "@/types/file-types";
@@ -15,7 +16,7 @@ import type { TaskStatusResponse } from "./types";
 
 const uploadQueryKeys = {
   upload: () => ["upload"],
-  taskStatus: (taskId: string) => ["taskStatus", taskId],
+  taskStatus: () => ["taskStatus"],
   download: () => ["download"],
 } as const;
 
@@ -105,6 +106,42 @@ const getTaskStatus = async (taskId: string) => {
   return data;
 };
 
+const useGetTaskStatusMutation = () => {
+  const {
+    setTaskStatus,
+    setTaskProgress,
+    setIsTaskCompleted,
+    incrementSseAttempt,
+  } = useFileStore();
+
+  return useMutation({
+    mutationKey: uploadQueryKeys.taskStatus(),
+    mutationFn: (taskId: string) => getTaskStatus(taskId),
+    onError: () => {
+      setTaskStatus(TaskStatusMap.Error);
+      toast.error("Task status failed. Please try again.");
+    },
+    onSuccess: (task) => {
+      setTaskStatus(task.status);
+
+      if (typeof task.progress === "number") {
+        setTaskProgress(Math.min(100, Math.max(0, Math.floor(task.progress))));
+      }
+
+      if (task.status === TaskStatusMap.Completed) {
+        setIsTaskCompleted(true);
+        return;
+      }
+
+      if (
+        task.status === TaskStatusMap.Processing ||
+        task.status === TaskStatusMap.Pending
+      ) {
+        incrementSseAttempt();
+      }
+    },
+  });
+};
 type DownloadPayload = {
   taskId: string;
 };
@@ -139,4 +176,9 @@ const downloadMutationOptions = () =>
     },
   });
 
-export { downloadMutationOptions, getTaskStatus, useUploadMutation };
+export {
+  downloadMutationOptions,
+  getTaskStatus,
+  useGetTaskStatusMutation,
+  useUploadMutation,
+};

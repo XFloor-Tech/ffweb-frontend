@@ -8,7 +8,6 @@ export type FileStore = {
   taskStatus: TaskStatus | null;
   taskProgress: number;
   isTaskCompleted: boolean;
-  isRetrying: boolean;
   sseAttempt: number;
 
   setSelectedFile: (file: File | null) => void;
@@ -17,7 +16,6 @@ export type FileStore = {
   setTaskStatus: (taskStatus: TaskStatus | null) => void;
   setTaskProgress: (taskProgress: number) => void;
   setIsTaskCompleted: (isTaskCompleted: boolean) => void;
-  setIsRetrying: (isRetrying: boolean) => void;
   setSseAttempt: (sseAttempt: number) => void;
   incrementSseAttempt: () => void;
   resetToDefaults: () => void;
@@ -30,7 +28,6 @@ const DEFAULT_FILE_STORE_STATE = {
   taskStatus: null,
   taskProgress: 0,
   isTaskCompleted: false,
-  isRetrying: false,
   sseAttempt: 0,
 } satisfies Pick<
   FileStore,
@@ -40,7 +37,6 @@ const DEFAULT_FILE_STORE_STATE = {
   | "taskStatus"
   | "taskProgress"
   | "isTaskCompleted"
-  | "isRetrying"
   | "sseAttempt"
 >;
 
@@ -53,7 +49,6 @@ export const useFileStore = create<FileStore>()((set) => ({
   setTaskStatus: (taskStatus) => set({ taskStatus }),
   setTaskProgress: (taskProgress) => set({ taskProgress }),
   setIsTaskCompleted: (isTaskCompleted) => set({ isTaskCompleted }),
-  setIsRetrying: (isRetrying) => set({ isRetrying }),
   setSseAttempt: (sseAttempt) => set({ sseAttempt }),
 
   incrementSseAttempt: () =>
