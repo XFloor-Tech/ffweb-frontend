@@ -21,6 +21,7 @@ import { API_BASE_URL } from "@/lib/api-client";
 import { streamSse } from "@/lib/sse";
 import { useConversionStore } from "@/store/conversion-store";
 import { useFileStore } from "@/store/file-store";
+import type { TaskStatus as TaskStatusType } from "@/types/file-types";
 import {
   getFalsyTaskStatus,
   getTrackStatusFromTaskStatus,
@@ -35,7 +36,7 @@ import { formatFileSize, getFileFormat, getQualityFromBitrate } from "./utils";
 type Props = Record<string, never>;
 
 type TaskEvent = {
-  status: string;
+  status: TaskStatusType;
   progress?: number;
 };
 
@@ -115,9 +116,7 @@ const FileUpload: FC<Props> = () => {
 
             if (
               maybeStatus === TaskStatus.Completed ||
-              maybeStatus === TaskStatus.Cancelled ||
-              maybeStatus === TaskStatus.Failed ||
-              maybeStatus === TaskStatus.Error
+              getFalsyTaskStatus(maybeStatus)
             ) {
               controller.abort();
             }
@@ -299,11 +298,12 @@ const FileUpload: FC<Props> = () => {
                 ? BUTTON_LABELS.downloading
                 : BUTTON_LABELS.download}
             </Button>
+
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
         )}
 
-        {!isTaskCompleted && !!taskStatus && getFalsyTaskStatus(taskStatus) && (
+        {!isTaskCompleted && getFalsyTaskStatus(taskStatus) && (
           <>
             <Button
               disabled={isRetrying}
@@ -312,11 +312,14 @@ const FileUpload: FC<Props> = () => {
             >
               {isRetrying ? BUTTON_LABELS.retrying : BUTTON_LABELS.retry}
             </Button>
-            <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
+
+            <Button onClick={resetFlow} disabled={isRetrying}>
+              {BUTTON_LABELS.convertMore}
+            </Button>
           </>
         )}
 
-        {!isTaskCompleted && (
+        {!isTaskCompleted && !getFalsyTaskStatus(taskStatus) && (
           <Button
             disabled={!selectedFile || isUploading || !!taskId}
             onClick={handleConvert}

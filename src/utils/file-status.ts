@@ -11,7 +11,8 @@ import type { TaskStatus } from "@/types/file-types";
  * - Failed
  * - Cancelled
  */
-const getFalsyTaskStatus = (status: TaskStatus) =>
+const getFalsyTaskStatus = (status?: TaskStatus | null) =>
+  !!status &&
   (
     [
       TaskStatusMap.Error,
@@ -20,6 +21,12 @@ const getFalsyTaskStatus = (status: TaskStatus) =>
     ] as string[]
   ).includes(status);
 
+/**
+ * Возвращает статус трека по статусу задачи.
+ * Если статус задачи является ошибкой или неудачной, то возвращает TrackStatus.Error.
+ * Если статус задачи завершен, то возвращает TrackStatus.Done.
+ * Если статус задачи выполняется, то возвращает TrackStatus.Converting.
+ */
 const getTrackStatusFromTaskStatus = (taskStatus: TaskStatus) =>
   taskStatus === TaskStatusMap.Error || taskStatus === TaskStatusMap.Failed
     ? TrackStatus.Error
