@@ -1,6 +1,6 @@
 import type { FC } from "react";
 
-import { FileUpload } from "@/components/file-upload/file-upload";
+import { FileUpload } from "@/components/file-upload";
 import { ConversionSettings } from "@/components/settings/conversion-settings";
 
 type Props = Record<string, never>;

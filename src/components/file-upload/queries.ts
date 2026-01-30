@@ -1,4 +1,4 @@
-import { mutationOptions } from "@tanstack/react-query";
+import { mutationOptions, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { apiRequest } from "@/lib/api-client";
@@ -7,6 +7,7 @@ import {
   parseFilenameFromContentDisposition,
 } from "@/lib/download";
 
+import { useFileStore } from "@/store/file-store";
 import type { ConversionSettings } from "@/types/conversion-types";
 import { appendFfmpegGoOptionsToFormData } from "./ffmpeg-options";
 import type { TaskStatusResponse } from "./types";
@@ -29,13 +30,17 @@ type UploadPayload = {
   options: ConversionSettings;
 };
 
-type UploadMutationCallbacks = {
-  onError?: () => void;
-  onSuccess?: (data: UploadResponse) => void;
-};
+const useUploadMutation = () => {
+  const {
+    setTaskId,
+    setTaskStatus,
+    setTaskProgress,
+    setIsTaskCompleted,
+    setSseAttempt,
+    setSelectedFile,
+  } = useFileStore();
 
-const uploadMutationOptions = (callbacks?: UploadMutationCallbacks) =>
-  mutationOptions({
+  return useMutation({
     mutationKey: uploadQueryKeys.upload(),
     mutationFn: async ({
       file,
@@ -68,14 +73,19 @@ const uploadMutationOptions = (callbacks?: UploadMutationCallbacks) =>
 
       return data;
     },
-    onSuccess: (data) => {
-      callbacks?.onSuccess?.(data);
+    onSuccess: ({ task_id, status }) => {
+      setTaskId(task_id);
+      setTaskStatus(status);
+      setTaskProgress(0);
+      setIsTaskCompleted(false);
+      setSseAttempt(0);
     },
     onError: () => {
       toast.error("Upload failed. Please try again.");
-      callbacks?.onError?.();
+      setSelectedFile(null);
     },
   });
+};
 
 const getTaskStatus = async (taskId: string) => {
   const [data, error] = await apiRequest<TaskStatusResponse>({
@@ -128,4 +138,4 @@ const downloadMutationOptions = () =>
     },
   });
 
-export { downloadMutationOptions, getTaskStatus, uploadMutationOptions };
+export { downloadMutationOptions, getTaskStatus, useUploadMutation };
