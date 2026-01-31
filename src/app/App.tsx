@@ -1,13 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useRef } from "react";
+
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { healthQueryOptions } from "@/app/queries";
 import { Header } from "@/components/layout/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { ALERT_TEXT } from "@/constants/alert";
 import { UploadPage } from "@/pages/upload";
 
 const App: FC = () => {
@@ -18,7 +19,7 @@ const App: FC = () => {
 
   useEffect(() => {
     if (isError && !hasShownError.current) {
-      toast.error("Mock server unavailable.");
+      toast.error(ALERT_TEXT.app.mockServerUnavailableToast);
       hasShownError.current = true;
     }
 
@@ -29,36 +30,32 @@ const App: FC = () => {
 
   if (isLoading) {
     return (
-      <>
-        <Toaster />
-        <div className="min-h-screen px-4 py-4 2xl:px-64 md:px-12 md:py-6 lg:px-48">
-          <Spinner className="text-primary" />
-        </div>
-      </>
+      <div className="min-h-screen px-4 py-4 2xl:px-64 md:px-12 md:py-6 lg:px-48">
+        <Spinner className="text-primary" />
+      </div>
     );
   }
 
   return (
-    <>
-      <Toaster />
-      <div className="min-h-screen px-4 py-4 2xl:px-64 md:px-12 md:py-6 lg:px-48">
-        <div className="flex flex-col gap-6">
-          <Header />
-          <main>
-            {!isHealthy && (
-              <Alert variant="destructive">
-                <AlertTitle>We couldn't reach the server</AlertTitle>
-                <AlertDescription>
-                  Please start the mock server and reload the page.
-                </AlertDescription>
-              </Alert>
-            )}
+    <div className="min-h-screen px-4 py-4 2xl:px-64 md:px-12 md:py-6 lg:px-48">
+      <div className="flex flex-col gap-6">
+        <Header />
+        <main>
+          {!isHealthy && (
+            <Alert variant="destructive">
+              <AlertTitle>
+                {ALERT_TEXT.app.serverUnreachableAlert.title}
+              </AlertTitle>
+              <AlertDescription>
+                {ALERT_TEXT.app.serverUnreachableAlert.description}
+              </AlertDescription>
+            </Alert>
+          )}
 
-            {isHealthy && <UploadPage />}
-          </main>
-        </div>
+          {isHealthy && <UploadPage />}
+        </main>
       </div>
-    </>
+    </div>
   );
 };
 

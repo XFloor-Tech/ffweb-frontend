@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
+import { API_ENDPOINTS } from "@/constants/api";
 import { apiRequest } from "@/lib/api-client";
 
 const uploadQueryKeys = {
@@ -21,7 +22,7 @@ const healthQueryOptions = () =>
     queryFn: async () => {
       const [data, error] = await apiRequest<HealthResponse>({
         method: "GET",
-        url: "/health",
+        url: API_ENDPOINTS.health,
       });
 
       if (error) {

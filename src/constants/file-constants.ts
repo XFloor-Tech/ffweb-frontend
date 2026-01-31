@@ -1,3 +1,8 @@
+import type {
+  TaskStatus as TaskStatusType,
+  TrackStatus as TrackStatusType,
+} from "@/types/file-types";
+
 const TaskStatus = {
   Cancelled: "cancelled",
   Completed: "completed",
@@ -5,19 +10,15 @@ const TaskStatus = {
   Failed: "failed",
   Pending: "pending",
   Processing: "processing",
-} as const;
-
-type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
+} as const satisfies Record<string, TaskStatusType>;
 
 const TrackStatus = {
   Converting: "converting",
   Done: "done",
   Error: "error",
-} as const;
+} as const satisfies Record<string, TrackStatusType>;
 
-type TrackStatus = (typeof TrackStatus)[keyof typeof TrackStatus];
-
-const PROGRESS_LABEL_BY_TASK_STATUS: Partial<Record<TaskStatus, string>> = {
+const PROGRESS_LABEL_BY_TASK_STATUS: Partial<Record<TaskStatusType, string>> = {
   [TaskStatus.Completed]: "Completed",
   [TaskStatus.Cancelled]: "Cancelled",
   [TaskStatus.Failed]: "Failed",
@@ -34,15 +35,10 @@ const BUTTON_LABELS = {
   retrying: "Retrying...",
 } as const;
 
-const TOAST_MESSAGES = {
-  noTaskSelected: "No task selected. Start a conversion first.",
-} as const;
-
 export {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
   PROGRESS_LABEL_BY_TASK_STATUS,
-  TOAST_MESSAGES,
   TaskStatus,
   TrackStatus,
 };

@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/lib/api-client";
+
 type SseEvent = {
   data: string;
 };
@@ -8,57 +10,52 @@ type StreamSseArgs = {
   onEvent: (event: SseEvent) => void;
 };
 
-const streamSse = async ({ url, signal, onEvent }: StreamSseArgs) => {
-  const response = await fetch(url, {
-    headers: { Accept: "text/event-stream" },
-    signal,
-  });
+const isAbsoluteUrl = (url: string) =>
+  url.startsWith("http://") || url.startsWith("https://");
 
-  if (!response.ok) {
-    throw new Error(`SSE request failed: ${response.status} ${response.statusText}`);
-  }
+const resolveSseUrl = (url: string) => {
+  if (isAbsoluteUrl(url) || !API_BASE_URL) return url;
 
-  if (!response.body) {
-    throw new Error("SSE response body is empty");
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-
-    while (true) {
-      const delimiterIndex = buffer.indexOf("\n\n");
-      const crlfDelimiterIndex = buffer.indexOf("\r\n\r\n");
-
-      const nextIndex =
-        delimiterIndex === -1
-          ? crlfDelimiterIndex
-          : crlfDelimiterIndex === -1
-            ? delimiterIndex
-            : Math.min(delimiterIndex, crlfDelimiterIndex);
-
-      if (nextIndex === -1) break;
-
-      const rawChunk = buffer.slice(0, nextIndex);
-      buffer = buffer.slice(nextIndex + (buffer.startsWith("\r\n\r\n", nextIndex) ? 4 : 2));
-
-      const lines = rawChunk.split(/\r?\n/);
-      const dataLines = lines
-        .filter((line) => line.startsWith("data:"))
-        .map((line) => line.slice("data:".length).trimStart());
-
-      if (dataLines.length === 0) continue;
-
-      onEvent({ data: dataLines.join("\n") });
-    }
+  try {
+    return new URL(url, API_BASE_URL).toString();
+  } catch {
+    const normalizedBase = API_BASE_URL.endsWith("/")
+      ? API_BASE_URL.slice(0, -1)
+      : API_BASE_URL;
+    const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+    return `${normalizedBase}${normalizedUrl}`;
   }
 };
 
-export { streamSse };
+const streamSse = async ({ url, signal, onEvent }: StreamSseArgs) => {
+  const resolvedUrl = resolveSseUrl(url);
 
+  await new Promise<void>((resolve, reject) => {
+    const eventSource = new EventSource(resolvedUrl);
+
+    const close = () => {
+      eventSource.close();
+      resolve();
+    };
+
+    if (signal?.aborted) {
+      close();
+      return;
+    }
+
+    signal?.addEventListener("abort", close, { once: true });
+
+    eventSource.addEventListener("message", (event) => {
+      if (!("data" in event)) return;
+      onEvent({ data: String((event as MessageEvent).data) });
+    });
+
+    eventSource.addEventListener("error", () => {
+      if (signal?.aborted) return;
+      eventSource.close();
+      reject(new Error("SSE connection error"));
+    });
+  });
+};
+
+export { streamSse };

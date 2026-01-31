@@ -1,106 +1,93 @@
+import { useEffect, type FC } from "react";
+
 import { useMutation } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
 import { toast } from "sonner";
 
 import { FileDropzone } from "@/components/file-dropzone";
-import { BasicSettings } from "@/components/settings/basic-settings";
 import { Track } from "@/components/track";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { API_BASE_URL } from "@/lib/api-client";
-import { streamSse } from "@/lib/sse";
-import { useConversionStore } from "@/store/conversion-store";
+import { ALERT_TEXT } from "@/constants/alert";
+import { API_ENDPOINTS } from "@/constants/api";
 import {
   BUTTON_LABELS,
   DEFAULT_PROGRESS_LABEL,
   PROGRESS_LABEL_BY_TASK_STATUS,
   TaskStatus,
-  TOAST_MESSAGES,
-  TrackStatus,
-} from "./constants";
+} from "@/constants/file-constants";
+import { streamSse } from "@/lib/sse";
+import { useConversionStore } from "@/store/conversion-store";
+import { useFileStore } from "@/store/file-store";
+import type { TaskStatus as TaskStatusType } from "@/types/file-types";
+import {
+  getFalsyTaskStatus,
+  getTrackStatusFromTaskStatus,
+} from "@/utils/file-status";
+import { ConversionSettings } from "../settings/conversion-settings";
 import {
   downloadMutationOptions,
-  getTaskStatus,
-  uploadMutationOptions,
+  useGetTaskStatusMutation,
+  useUploadMutation,
 } from "./queries";
 import { formatFileSize, getFileFormat, getQualityFromBitrate } from "./utils";
 
 type Props = Record<string, never>;
 
 type TaskEvent = {
-  status: string;
+  status: TaskStatusType;
   progress?: number;
 };
 
 const FileUpload: FC<Props> = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isPreparing, setIsPreparing] = useState(false);
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const [taskStatus, setTaskStatus] = useState<string | null>(null);
-  const [taskProgress, setTaskProgress] = useState<number>(0);
-  const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [sseAttempt, setSseAttempt] = useState(0);
-  const { mutate: upload, isPending: isUploading } = useMutation(
-    uploadMutationOptions({
-      onError: () => setSelectedFile(null),
-      onSuccess: ({ task_id, status }) => {
-        setTaskId(task_id);
-        setTaskStatus(status);
-        setTaskProgress(0);
-        setIsTaskCompleted(false);
-        setSseAttempt(0);
-      },
-    }),
-  );
+  const {
+    selectedFile,
+    isPreparing,
+    taskId,
+    taskStatus,
+    taskProgress,
+    isTaskCompleted,
+    sseAttempt,
+    setIsPreparing,
+    setIsTaskCompleted,
+    setSelectedFile,
+    setSseAttempt,
+    setTaskId,
+    setTaskProgress,
+    setTaskStatus,
+    resetToDefaults: resetFileState,
+  } = useFileStore();
+
+  const conversionSettings = useConversionStore();
+
+  const { mutate: upload, isPending: isUploading } = useUploadMutation();
+
+  const { mutate: getTaskStatus, isPending: isTaskStatusPending } =
+    useGetTaskStatusMutation();
+
   const { mutate: download, isPending: isDownloading } = useMutation(
     downloadMutationOptions(),
   );
-  const {
-    bitrate,
-    sampleRate,
-    channels,
-    bitDepth,
-    metadata,
-    gain,
-    normalizePeak,
-    enableNormalizePeak,
-    enableTrim,
-    startTime,
-    endTime,
-    useCustomStart,
-    useCustomEnd,
-    codec,
-    resetToDefaults,
-  } = useConversionStore();
-  const outputFormat = codec.toLowerCase();
-  const quality = getQualityFromBitrate(bitrate);
+
+  const outputFormat = conversionSettings.codec.toLowerCase();
+  const quality = getQualityFromBitrate(conversionSettings.bitrate);
 
   const resetFlow = () => {
-    setSelectedFile(null);
-    setTaskId(null);
-    setTaskStatus(null);
-    setTaskProgress(0);
-    setIsTaskCompleted(false);
-    setIsRetrying(false);
-    setSseAttempt(0);
-    resetToDefaults();
+    resetFileState();
+    conversionSettings.resetToDefaults();
   };
 
   useEffect(() => {
-    if (!taskId) return;
-    if (isTaskCompleted) return;
+    if (!taskId || isTaskCompleted) return;
 
     const controller = new AbortController();
-    const url = `${API_BASE_URL}/api/events/${taskId}`;
 
     const run = async () => {
       try {
         await streamSse({
-          url,
+          url: API_ENDPOINTS.events(taskId),
           signal: controller.signal,
           onEvent: ({ data }) => {
             let parsed: unknown;
@@ -129,9 +116,7 @@ const FileUpload: FC<Props> = () => {
 
             if (
               maybeStatus === TaskStatus.Completed ||
-              maybeStatus === TaskStatus.Cancelled ||
-              maybeStatus === TaskStatus.Failed ||
-              maybeStatus === TaskStatus.Error
+              getFalsyTaskStatus(maybeStatus)
             ) {
               controller.abort();
             }
@@ -146,68 +131,37 @@ const FileUpload: FC<Props> = () => {
     run();
 
     return () => controller.abort();
-  }, [isTaskCompleted, sseAttempt, taskId]);
+  }, [isTaskCompleted, setTaskProgress, setTaskStatus, sseAttempt, taskId]);
 
+  // Gets status on sse finish and based on that sets task status.
+  // TODO: move to a sse finish callback logic instead of effect??
   useEffect(() => {
-    if (!taskId) return;
-    if (taskStatus !== TaskStatus.Completed) return;
-    if (isTaskCompleted) return;
+    if (!taskId || taskStatus !== TaskStatus.Completed || isTaskCompleted)
+      return;
 
-    const run = async () => {
-      try {
-        const task = await getTaskStatus(taskId);
-        if (task.status === TaskStatus.Completed) {
-          setIsTaskCompleted(true);
-          return;
-        }
-
-        setTaskStatus(task.status);
-      } catch {
-        setTaskStatus(TaskStatus.Error);
-      }
-    };
-
-    run();
-  }, [isTaskCompleted, taskId, taskStatus]);
+    getTaskStatus(taskId);
+  }, [
+    getTaskStatus,
+    isTaskCompleted,
+    setIsTaskCompleted,
+    setTaskStatus,
+    taskId,
+    taskStatus,
+  ]);
 
   const handleRetry = async () => {
     if (!taskId) {
-      toast.error(TOAST_MESSAGES.noTaskSelected);
+      toast.error(ALERT_TEXT.fileUpload.noTaskSelectedToast);
       return;
     }
 
-    setIsRetrying(true);
-    try {
-      const task = await getTaskStatus(taskId);
-      setTaskStatus(task.status);
-
-      if (typeof task.progress === "number") {
-        setTaskProgress(Math.min(100, Math.max(0, Math.floor(task.progress))));
-      }
-
-      if (task.status === TaskStatus.Completed) {
-        setIsTaskCompleted(true);
-        return;
-      }
-
-      if (
-        task.status === TaskStatus.Processing ||
-        task.status === TaskStatus.Pending
-      ) {
-        setSseAttempt((value) => value + 1);
-        return;
-      }
-    } catch {
-      setTaskStatus(TaskStatus.Error);
-    } finally {
-      setIsRetrying(false);
-    }
+    getTaskStatus(taskId);
   };
 
   const handleFileSelect = (file: File) => {
     setIsPreparing(true);
     setSelectedFile(file);
-    requestAnimationFrame(() => setIsPreparing(false));
+    setIsPreparing(false);
   };
 
   const handleConvert = () => {
@@ -219,27 +173,12 @@ const FileUpload: FC<Props> = () => {
     setTaskStatus(null);
     setTaskProgress(0);
     setIsTaskCompleted(false);
-    setIsRetrying(false);
     setSseAttempt(0);
     upload({
       file: selectedFile,
       outputFormat,
       quality,
-      options: {
-        bitrate,
-        sampleRate,
-        channels,
-        bitDepth,
-        metadata,
-        gain,
-        normalizePeak,
-        enableNormalizePeak,
-        enableTrim,
-        startTime,
-        endTime,
-        useCustomStart,
-        useCustomEnd,
-      },
+      options: conversionSettings,
     });
   };
 
@@ -257,30 +196,19 @@ const FileUpload: FC<Props> = () => {
       return null;
     }
 
-    const trackStatus =
-      taskStatus === TaskStatus.Error || taskStatus === TaskStatus.Failed
-        ? TrackStatus.Error
-        : isTaskCompleted
-          ? TrackStatus.Done
-          : taskId
-            ? TrackStatus.Converting
-            : undefined;
+    const trackStatus = taskStatus
+      ? getTrackStatusFromTaskStatus(taskStatus)
+      : undefined;
+
     const showProgress =
       !!taskId &&
-      taskStatus !== TaskStatus.Error &&
-      taskStatus !== TaskStatus.Failed &&
-      taskStatus !== TaskStatus.Cancelled &&
+      !!taskStatus &&
+      !getFalsyTaskStatus(taskStatus) &&
       !isTaskCompleted;
-    const progressLabel = isTaskCompleted
-      ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Completed] ??
-        DEFAULT_PROGRESS_LABEL)
-      : taskStatus === TaskStatus.Cancelled
-        ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Cancelled] ??
-          DEFAULT_PROGRESS_LABEL)
-        : taskStatus === TaskStatus.Failed
-          ? (PROGRESS_LABEL_BY_TASK_STATUS[TaskStatus.Failed] ??
-            DEFAULT_PROGRESS_LABEL)
-          : DEFAULT_PROGRESS_LABEL;
+
+    const progressLabel = taskStatus
+      ? PROGRESS_LABEL_BY_TASK_STATUS[taskStatus]
+      : DEFAULT_PROGRESS_LABEL;
 
     return (
       <>
@@ -310,6 +238,7 @@ const FileUpload: FC<Props> = () => {
       >
         {content}
       </FileDropzone>
+
       <div className="flex items-center justify-end gap-2">
         <div className="xl:hidden">
           <Dialog>
@@ -321,11 +250,12 @@ const FileUpload: FC<Props> = () => {
             </DialogTrigger>
 
             <DialogContent className="max-h-screen overflow-auto">
-              <BasicSettings />
+              <ConversionSettings />
             </DialogContent>
           </Dialog>
         </div>
-        {isTaskCompleted && taskId ? (
+
+        {isTaskCompleted && taskId && (
           <>
             <Button
               disabled={isDownloading}
@@ -336,22 +266,30 @@ const FileUpload: FC<Props> = () => {
                 ? BUTTON_LABELS.downloading
                 : BUTTON_LABELS.download}
             </Button>
+
             <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
           </>
-        ) : taskStatus === TaskStatus.Error ||
-          taskStatus === TaskStatus.Failed ||
-          taskStatus === TaskStatus.Cancelled ? (
+        )}
+
+        {!isTaskCompleted && getFalsyTaskStatus(taskStatus) && (
           <>
             <Button
-              disabled={isRetrying}
+              disabled={isTaskStatusPending}
               onClick={handleRetry}
               variant="secondary"
             >
-              {isRetrying ? BUTTON_LABELS.retrying : BUTTON_LABELS.retry}
+              {isTaskStatusPending
+                ? BUTTON_LABELS.retrying
+                : BUTTON_LABELS.retry}
             </Button>
-            <Button onClick={resetFlow}>{BUTTON_LABELS.convertMore}</Button>
+
+            <Button onClick={resetFlow} disabled={isTaskStatusPending}>
+              {BUTTON_LABELS.convertMore}
+            </Button>
           </>
-        ) : (
+        )}
+
+        {!isTaskCompleted && !getFalsyTaskStatus(taskStatus) && (
           <Button
             disabled={!selectedFile || isUploading || !!taskId}
             onClick={handleConvert}

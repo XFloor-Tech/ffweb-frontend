@@ -2,6 +2,8 @@ import type { FC } from "react";
 
 import { AudioLines, FileType, HardDrive } from "lucide-react";
 
+import { TrackStatus as TrackStatusMap } from "@/constants/file-constants";
+import type { TrackStatus } from "@/types/file-types";
 import { Badge } from "./ui/badge";
 
 type Props = {
@@ -11,7 +13,7 @@ type Props = {
     convertedCodec?: string;
     size?: string;
   };
-  status?: "converting" | "done" | "error";
+  status?: TrackStatus;
 };
 
 const Track: FC<Props> = ({ data, status }) => {
@@ -35,14 +37,14 @@ const Track: FC<Props> = ({ data, status }) => {
       {!!status && <Badge variant={statusClasses}>{statusLabel}</Badge>}
 
       <div className="flex items-center gap-6">
-        {!!data?.codec && (
+        {!!data?.codec && status !== "done" && (
           <div className="flex flex-col items-center gap-1">
             <FileType size={24} className="text-primary" strokeWidth={1} />
             <span>{data.codec}</span>
           </div>
         )}
 
-        {status === "done" && !!data?.convertedCodec && (
+        {status === TrackStatusMap.Done && !!data?.convertedCodec && (
           <div className="flex flex-col items-center gap-1">
             <FileType size={24} className="text-emerald-400" strokeWidth={1} />
             <span className="text-emerald-300">

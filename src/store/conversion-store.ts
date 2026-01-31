@@ -12,7 +12,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type ConversionStore = ConversionSettings & {
-  enableNormalizePeak: boolean;
   // Actions
   setCodec: (codec: Codec) => void;
   setBitrate: (bitrate: Bitrate) => void;
