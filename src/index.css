@@ -27,10 +27,16 @@
   --text-h4--line-height: 1.2;
   --text-h4--letter-spacing: -0.02em;
   --text-h4--font-weight: 600;
+
   --text-mono: 1rem;
   --text-mono--line-height: 1.5;
   --text-mono--letter-spacing: 0;
   --text-mono--font-family: var(--font-mono);
+
+  --text-mini: 12px;
+  --text-mini--line-height: 150%;
+  --text-mini--letter-spacing: 1.5%;
+  --text-mini--font-weight: 400;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -1,4 +1,4 @@
-import { FileAudio, Scissors, Settings2, Sliders } from "lucide-react";
+import { Scissors, Settings2, Sliders } from "lucide-react";
 import type { FC } from "react";
 
 import {
@@ -74,32 +74,7 @@ const ConversionSettings: FC<Props> = ({ className }) => {
         defaultValue={DEFAULT_ACCORDION_VALUE}
         className="flex w-full flex-col gap-6"
       >
-        {/* Basic Settings Accordion Item */}
-        <AccordionItem
-          value={accordionValues.BASIC}
-          className="rounded-lg border border-gray-800 bg-gray-900"
-        >
-          <AccordionTrigger className="rounded-t-lg px-4 py-4 hover:bg-gray-800/50 hover:no-underline">
-            <div className="flex w-full items-center gap-3 text-left">
-              <div className="flex w-full items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-blue-600/20 p-2">
-                    <FileAudio className="h-4 w-4 text-blue-400" />
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-white">Codec</h3>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </AccordionTrigger>
-
-          <AccordionContent className="px-4 pt-2 pb-6">
-            <Separator className="mb-6 bg-gray-800" />
-            <BasicSettings />
-          </AccordionContent>
-        </AccordionItem>
+        <BasicSettings />
 
         {/* Advanced Settings Accordion Item */}
         <AccordionItem
