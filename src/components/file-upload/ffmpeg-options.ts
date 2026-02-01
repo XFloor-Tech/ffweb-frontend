@@ -120,10 +120,9 @@ const buildFfmpegGoOptions = (options: ConversionSettings): FfmpegGoOptions => {
   }
 
   const sampleFormat = getSampleFormatFromBitDepth(options.bitDepth);
-  // TODO: enable sample format for PCM only
-  // if (sampleFormat) {
-  //   outputOptions.sample_fmt = sampleFormat;
-  // }
+  if (sampleFormat) {
+    outputOptions.sample_fmt = sampleFormat;
+  }
 
   const audioFilters: string[] = [];
   if (typeof options.gain === "number" && options.gain !== 0) {

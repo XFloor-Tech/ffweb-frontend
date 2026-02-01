@@ -10,13 +10,16 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   BIT_DEPTH_OPTIONS,
+  LOSELESS_CODECS,
   METADATA_OPTIONS,
 } from "@/constants/conversion-constants";
 import { useConversionStore } from "@/store/conversion-store";
 import type { BitDepth, Metadata } from "@/types/conversion-types";
+import { NumberInput } from "../number-input";
 
 export function AdvancedSettings() {
   const {
+    codec,
     bitDepth,
     metadata,
     gain,
@@ -32,29 +35,32 @@ export function AdvancedSettings() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4">
-        <Select
-          value={bitDepth}
-          onValueChange={(value) => setBitDepth(value as BitDepth)}
-        >
-          <SelectTrigger
-            id="bitDepth"
-            className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white hover:border-gray-600"
+        {/* Show bit depth only for lossless codecs */}
+        {LOSELESS_CODECS.some((c) => c === codec) && (
+          <Select
+            value={bitDepth}
+            onValueChange={(value) => setBitDepth(value as BitDepth)}
           >
-            <SelectValue placeholder="Select bit depth" label="Bit Depth" />
-          </SelectTrigger>
+            <SelectTrigger
+              id="bitDepth"
+              className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white hover:border-gray-600"
+            >
+              <SelectValue placeholder="Select bit depth" label="Bit Depth" />
+            </SelectTrigger>
 
-          <SelectContent className="border-gray-700 bg-gray-800 text-white">
-            {BIT_DEPTH_OPTIONS.map((option) => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                className="hover:bg-gray-700 focus:bg-gray-700"
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectContent className="border-gray-700 bg-gray-800 text-white">
+              {BIT_DEPTH_OPTIONS.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className="hover:bg-gray-700 focus:bg-gray-700"
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Select
           value={metadata}
@@ -90,19 +96,34 @@ export function AdvancedSettings() {
             Gain
           </Label>
 
-          <Input
+          {/* <Input */}
+          {/*   id="gain" */}
+          {/*   type="text" */}
+          {/*   value={gain >= 0 ? `+${gain}db` : `${gain}db`} */}
+          {/*   onChange={(e) => { */}
+          {/*     const value = e.target.value; */}
+          {/*     const numValue = parseFloat(value.replace(/[^0-9.-]+/g, "")); */}
+          {/*     if (!isNaN(numValue)) { */}
+          {/*       setGain(numValue); */}
+          {/*     } */}
+          {/*   }} */}
+          {/*   className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 pr-10 text-white placeholder:text-gray-500 hover:border-gray-600" */}
+          {/*   placeholder="0db" */}
+          {/* /> */}
+
+          <NumberInput
             id="gain"
-            type="text"
-            value={gain >= 0 ? `+${gain}db` : `${gain}db`}
-            onChange={(e) => {
-              const value = e.target.value;
-              const numValue = parseFloat(value.replace(/[^0-9.-]+/g, ""));
-              if (!isNaN(numValue)) {
-                setGain(numValue);
+            value={gain}
+            onValueChange={(value) => {
+              if (!isNaN(value)) {
+                setGain(value);
               }
             }}
-            className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 pr-10 text-white placeholder:text-gray-500 hover:border-gray-600"
+            className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 hover:border-gray-600"
             placeholder="0db"
+            postElement="db"
+            min={-7}
+            max={10}
           />
         </div>
 

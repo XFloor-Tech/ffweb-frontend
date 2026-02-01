@@ -29,6 +29,12 @@ export const CODEC_OPTIONS = [
   { value: "M4A", label: "M4A" },
 ] as const satisfies ReadonlyArray<SelectOption<Codec>>;
 
+export const LOSELESS_CODECS = [
+  "WAV",
+  "AIFF",
+  "FLAC",
+] as const satisfies ReadonlyArray<Codec>;
+
 export const BITRATE_OPTIONS = [
   { value: "64k", label: "64 kbps" },
   { value: "128k", label: "128 kbps" },
