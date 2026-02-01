@@ -228,7 +228,7 @@ const FileUpload: FC<Props> = () => {
   })();
 
   return (
-    <div className="flex h-full min-h-screen w-full flex-col gap-6 rounded-xl border border-gray-800 bg-gray-900/40 p-6">
+    <div className="flex h-full min-h-screen w-full flex-col gap-6 rounded-xl border border-gray-800 bg-gray-900 p-6">
       <span className="text-h4 text-gray-50">File To Convert</span>
 
       <FileDropzone
@@ -250,7 +250,7 @@ const FileUpload: FC<Props> = () => {
             </DialogTrigger>
 
             <DialogContent className="max-h-screen overflow-auto">
-              <ConversionSettings />
+              <ConversionSettings className="border-0" />
             </DialogContent>
           </Dialog>
         </div>
