@@ -176,8 +176,9 @@ className={cn(
 - Follow existing patterns when adding new features
 - Keep components under 150 lines when possible
 - Extract types to separate `types.ts` files when reused
-- create utils.ts file in component directive for external functions specifically used in component.
-- when component has more than 3 constants - create constants.ts file and export constants variables from there.
+- create utils.ts file in component directive for external functions specifically used in component. Do not create utility functions in component files!
+- create hooks.ts file in component directive for external hooks specifically used in component.
+- when component has more than 2 constants - create constants.ts file and export constants variables from there.
 
 ### Commit Messages
 
