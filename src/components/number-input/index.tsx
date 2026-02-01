@@ -13,7 +13,12 @@ import { MinusIcon, PlusIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-import { clampNumber, formatNumber, parseNumberInput } from "./utils";
+import {
+  clampNumber,
+  formatNumber,
+  parseNumberInput,
+  sanitizeNumberText,
+} from "./utils";
 
 type Props = Omit<
   ComponentProps<typeof Input>,
@@ -93,7 +98,18 @@ const NumberInput: FC<Props> = ({
     const borderLeftPx = Number.parseFloat(styles.borderLeftWidth) || 0;
     const gap = 2;
 
+    const paddingTopPx = Number.parseFloat(styles.paddingTop) || 0;
+    const borderTopPx = Number.parseFloat(styles.borderTopWidth) || 0;
+    const fontSizePx = Number.parseFloat(styles.fontSize) || 0;
+    const lineHeightRaw = styles.lineHeight;
+    const lineHeightPx =
+      lineHeightRaw === "normal"
+        ? fontSizePx * 1.2
+        : Number.parseFloat(lineHeightRaw) || fontSizePx * 1.2;
+
     post.style.left = `${borderLeftPx + paddingLeftPx + valueWidth + gap}px`;
+    // TODO: correct lineHeightPx and divide multiplier measurement.
+    post.style.top = `${borderTopPx + paddingTopPx + lineHeightPx / 1.6}px`;
   }, [displayValue, shouldShowPostElement]);
 
   const commitValue = (nextValue: number) => {
@@ -152,13 +168,19 @@ const NumberInput: FC<Props> = ({
 
   return (
     <div className="relative">
+      {label && (
+        <span className="pointer-events-none absolute top-2 left-3 text-mini text-primary select-none">
+          {label}
+        </span>
+      )}
+
       <Input
         ref={inputRef}
         type="text"
         inputMode="decimal"
         value={displayValue}
         disabled={disabled}
-        className={cn("pr-28", className)}
+        className={cn("pt-6 pr-28 pb-2", className)}
         onKeyDown={handleKeyDown}
         onFocus={(event) => {
           setIsEditing(true);

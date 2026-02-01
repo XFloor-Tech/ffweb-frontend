@@ -91,41 +91,21 @@ export function AdvancedSettings() {
       </div>
 
       <div className="space-y-6">
-        <div className="space-y-3">
-          <Label htmlFor="gain" className="text-sm font-medium text-gray-300">
-            Gain
-          </Label>
-
-          {/* <Input */}
-          {/*   id="gain" */}
-          {/*   type="text" */}
-          {/*   value={gain >= 0 ? `+${gain}db` : `${gain}db`} */}
-          {/*   onChange={(e) => { */}
-          {/*     const value = e.target.value; */}
-          {/*     const numValue = parseFloat(value.replace(/[^0-9.-]+/g, "")); */}
-          {/*     if (!isNaN(numValue)) { */}
-          {/*       setGain(numValue); */}
-          {/*     } */}
-          {/*   }} */}
-          {/*   className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 pr-10 text-white placeholder:text-gray-500 hover:border-gray-600" */}
-          {/*   placeholder="0db" */}
-          {/* /> */}
-
-          <NumberInput
-            id="gain"
-            value={gain}
-            onValueChange={(value) => {
-              if (!isNaN(value)) {
-                setGain(value);
-              }
-            }}
-            className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 hover:border-gray-600"
-            placeholder="0db"
-            postElement="db"
-            min={-7}
-            max={10}
-          />
-        </div>
+        <NumberInput
+          id="gain"
+          value={gain}
+          onValueChange={(value) => {
+            if (!isNaN(value)) {
+              setGain(value);
+            }
+          }}
+          className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 hover:border-gray-600"
+          placeholder="0db"
+          label="Gain"
+          postElement="db"
+          min={-7}
+          max={10}
+        />
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
