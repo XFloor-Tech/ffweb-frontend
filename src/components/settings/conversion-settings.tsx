@@ -69,57 +69,41 @@ const ConversionSettings: FC<Props> = ({ className }) => {
 
       <Separator className="bg-gray-800" />
 
+      <BasicSettings />
+
       <Accordion
         type="multiple"
         defaultValue={DEFAULT_ACCORDION_VALUE}
         className="flex w-full flex-col gap-6"
       >
-        <BasicSettings />
-
-        {/* Advanced Settings Accordion Item */}
-        <AccordionItem
-          value={accordionValues.ADVANCED}
-          className="rounded-lg border border-gray-800 bg-gray-900"
-        >
-          <AccordionTrigger className="rounded-t-lg px-4 py-4 hover:bg-gray-800/50 hover:no-underline">
+        <AccordionItem value={accordionValues.ADVANCED}>
+          <AccordionTrigger>
             <div className="flex items-center gap-3 text-left">
               <div className="rounded-lg bg-purple-600/20 p-2">
                 <Sliders className="h-4 w-4 text-purple-400" />
               </div>
 
-              <div>
-                <h3 className="font-semibold text-white">
-                  Advanced Audio Settings
-                </h3>
-              </div>
+              <span className="text-small">Advanced Audio Settings</span>
             </div>
           </AccordionTrigger>
 
-          <AccordionContent className="px-4 pt-2 pb-6">
-            <Separator className="mb-6 bg-gray-800" />
+          <AccordionContent className="mt-2">
             <AdvancedSettings />
           </AccordionContent>
         </AccordionItem>
 
-        {/* Trimming Settings Accordion Item */}
-        <AccordionItem
-          value={accordionValues.TRIMMING}
-          className="rounded-lg border border-gray-800 bg-gray-900"
-        >
-          <AccordionTrigger className="rounded-t-lg px-4 py-4 hover:bg-gray-800/50 hover:no-underline">
+        <AccordionItem value={accordionValues.TRIMMING}>
+          <AccordionTrigger>
             <div className="flex items-center gap-3 text-left">
               <div className="rounded-lg bg-amber-600/20 p-2">
                 <Scissors className="h-4 w-4 text-amber-400" />
               </div>
 
-              <div>
-                <h3 className="font-semibold text-white">Editing / Trimming</h3>
-              </div>
+              <span className="text-small">Editing / Trimming</span>
             </div>
           </AccordionTrigger>
 
-          <AccordionContent className="px-4 pt-2 pb-6">
-            <Separator className="mb-6 bg-gray-800" />
+          <AccordionContent className="mt-2">
             <TrimmingSettings />
           </AccordionContent>
         </AccordionItem>

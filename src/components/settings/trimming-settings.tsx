@@ -1,13 +1,12 @@
 import { useEffect, useState, type FC } from "react";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useConversionStore } from "@/store/conversion-store";
 
+import { Switch } from "../ui/switch";
 import {
   formatTrimTimeForInput,
   msToTrimDisplay,
@@ -72,112 +71,81 @@ const TrimmingSettings: FC<Props> = ({ className }) => {
   };
 
   return (
-    <div className={cn("space-y-6", className)}>
-      <div>
-        <h4 className="mb-4 text-lg font-medium text-white">Trim Settings</h4>
+    <div className={cn("flex flex-col gap-3", className)}>
+      <div className="flex items-center gap-3">
+        <Switch
+          id="trim-enable"
+          checked={enableTrim}
+          onCheckedChange={(checked) => setEnableTrim(!!checked)}
+        />
 
-        <div className="space-y-6">
-          {/* Enable Trim */}
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="trim-enable"
-              checked={enableTrim}
-              onCheckedChange={(checked) => setEnableTrim(!!checked)}
-              className="border-gray-600 data-[state=checked]:border-amber-600 data-[state=checked]:bg-amber-600"
+        <Label
+          htmlFor="trim-enable"
+          className="text-small font-medium text-nowrap"
+        >
+          Trim:
+        </Label>
+      </div>
+
+      {enableTrim && (
+        <>
+          {/* Visual Slider */}
+          <div className="py-4">
+            <Slider
+              value={[sliderRange[0], sliderRange[1]]}
+              onValueChange={handleSliderChange}
+              min={0}
+              max={MAX_DURATION_MS}
+              step={100}
+              className="w-full"
             />
 
-            <div className="space-y-1">
-              <Label
-                htmlFor="trim-enable"
-                className="cursor-pointer text-base font-medium text-gray-300"
-              >
-                Trim
-              </Label>
+            <div className="mt-2 flex justify-between text-xs text-gray-500">
+              <span>{msToTrimDisplay(0)}</span>
+              <span>{msToTrimDisplay(MAX_DURATION_MS / 2)}</span>
+              <span>{msToTrimDisplay(MAX_DURATION_MS)}</span>
             </div>
           </div>
 
-          {enableTrim && (
-            <>
-              <Separator className="bg-gray-800" />
-
-              {/* Visual Slider */}
-              <div className="space-y-4 pt-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-gray-300">
-                    Trim Range
-                  </Label>
-                </div>
-
-                <div className="py-4">
-                  <Slider
-                    value={[sliderRange[0], sliderRange[1]]}
-                    onValueChange={handleSliderChange}
-                    min={0}
-                    max={MAX_DURATION_MS}
-                    step={100}
-                    className="w-full"
-                  />
-
-                  <div className="mt-2 flex justify-between text-xs text-gray-500">
-                    <span>{msToTrimDisplay(0)}</span>
-                    <span>{msToTrimDisplay(MAX_DURATION_MS / 2)}</span>
-                    <span>{msToTrimDisplay(MAX_DURATION_MS)}</span>
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="flex flex-col items-start gap-1">
+              <div className="relative">
+                <Input
+                  id="start-time"
+                  type="text"
+                  value={formatTrimTimeForInput(startTime)}
+                  onChange={(e) =>
+                    handleTimeInputChange("start", e.target.value)
+                  }
+                  placeholder="00:05:517"
+                  className="hover:bg-gray-750 h-9 w-30 border-gray-700 bg-gray-800 text-start font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
+                />
               </div>
 
-              {/* Time Inputs */}
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {/* Start Time */}
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="start-time"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Start Time
-                  </Label>
+              <Label htmlFor="start-time" className="text-small font-medium">
+                Start Time
+              </Label>
+            </div>
 
-                  <div className="relative">
-                    <Input
-                      id="start-time"
-                      type="text"
-                      value={formatTrimTimeForInput(startTime)}
-                      onChange={(e) =>
-                        handleTimeInputChange("start", e.target.value)
-                      }
-                      placeholder="00:05:517"
-                      className="hover:bg-gray-750 border-gray-700 bg-gray-800 text-center font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
-                    />
-                  </div>
-                </div>
-
-                {/* End Time */}
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="end-time"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    End Time
-                  </Label>
-
-                  <div className="relative">
-                    <Input
-                      id="end-time"
-                      type="text"
-                      value={formatTrimTimeForInput(endTime)}
-                      onChange={(e) =>
-                        handleTimeInputChange("end", e.target.value)
-                      }
-                      placeholder="01:25:120"
-                      className="hover:bg-gray-750 border-gray-700 bg-gray-800 text-center font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
-                    />
-                  </div>
-                </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="relative">
+                <Input
+                  id="end-time"
+                  type="text"
+                  value={formatTrimTimeForInput(endTime)}
+                  onChange={(e) => handleTimeInputChange("end", e.target.value)}
+                  placeholder="01:25:120"
+                  className="hover:bg-gray-750 h-9 w-30 border-gray-700 bg-gray-800 text-start font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
+                />
               </div>
-            </>
-          )}
-        </div>
-      </div>
+
+              <Label htmlFor="end-time" className="text-small font-medium">
+                End Time
+              </Label>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
