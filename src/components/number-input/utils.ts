@@ -4,6 +4,12 @@ type ParseResult =
   | { kind: "invalid" }
   | { kind: "number"; value: number };
 
+type PostElementMeasurementElements = {
+  input: HTMLInputElement;
+  measure: HTMLSpanElement;
+  post: HTMLSpanElement;
+};
+
 const MAX_FORMAT_DECIMALS = 12;
 
 const clampNumber = (value: number, min?: number, max?: number) => {
@@ -101,10 +107,7 @@ const parseNumberInput = (raw: string): ParseResult => {
   if (raw === "-" || raw === "+" || raw === "." || raw === "-." || raw === "+.")
     return { kind: "intermediate" };
 
-  if (
-    raw.endsWith(".") &&
-    /^[-+]?\d+(?:\.)$/.test(raw)
-  ) {
+  if (raw.endsWith(".") && /^[-+]?\d+(?:\.)$/.test(raw)) {
     return { kind: "intermediate" };
   }
 
@@ -118,11 +121,69 @@ const parseNumberInput = (raw: string): ParseResult => {
   return { kind: "number", value };
 };
 
+const sanitizeAndParseNumberInput = (raw: string) => {
+  const sanitized = sanitizeNumberText(raw);
+  const parsed = parseNumberInput(sanitized);
+
+  return {
+    sanitized,
+    parsed,
+  };
+};
+
+const resolveLineHeight = (lineHeightRaw: string, fontSizePx: number) => {
+  if (lineHeightRaw === "normal") {
+    return fontSizePx * 1.2;
+  }
+
+  return Number.parseFloat(lineHeightRaw) || fontSizePx * 1.2;
+};
+
+const updatePostElementPosition = ({
+  input,
+  measure,
+  post,
+}: PostElementMeasurementElements) => {
+  const styles = window.getComputedStyle(input);
+
+  measure.style.font = styles.font;
+  measure.style.letterSpacing = styles.letterSpacing;
+  measure.style.textTransform = styles.textTransform;
+  measure.style.lineHeight = styles.lineHeight;
+
+  post.style.font = styles.font;
+  post.style.letterSpacing = styles.letterSpacing;
+  post.style.textTransform = styles.textTransform;
+  post.style.lineHeight = styles.lineHeight;
+  post.style.color = styles.color;
+  post.style.opacity = styles.opacity;
+
+  const valueRect = measure.getBoundingClientRect();
+  const paddingLeftPx = Number.parseFloat(styles.paddingLeft) || 0;
+  const borderLeftPx = Number.parseFloat(styles.borderLeftWidth) || 0;
+  const paddingTopPx = Number.parseFloat(styles.paddingTop) || 0;
+  const paddingBottomPx = Number.parseFloat(styles.paddingBottom) || 0;
+  const borderTopPx = Number.parseFloat(styles.borderTopWidth) || 0;
+  const fontSizePx = Number.parseFloat(styles.fontSize) || 16;
+  const lineHeightPx = resolveLineHeight(styles.lineHeight, fontSizePx);
+  const contentHeight = Math.max(
+    0,
+    input.clientHeight - paddingTopPx - paddingBottomPx,
+  );
+  const textCenterOffset = contentHeight > 0 ? contentHeight / 2 : lineHeightPx / 2;
+  const gapPx = Math.max(2, fontSizePx * 0.125);
+
+  post.style.left = `${borderLeftPx + paddingLeftPx + valueRect.width + gapPx}px`;
+  post.style.top = `${borderTopPx + paddingTopPx + textCenterOffset}px`;
+};
+
 export {
   clampNumber,
   formatNumber,
   isTextAllowedForStep,
   normalizeStepResult,
   parseNumberInput,
+  sanitizeAndParseNumberInput,
   sanitizeNumberText,
+  updatePostElementPosition,
 };

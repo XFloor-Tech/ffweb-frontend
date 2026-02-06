@@ -81,7 +81,7 @@ const TrimmingSettings: FC<Props> = ({ className }) => {
 
         <Label
           htmlFor="trim-enable"
-          className="text-small font-medium text-nowrap"
+          className="cursor-pointer text-small font-medium text-nowrap"
         >
           Trim:
         </Label>
