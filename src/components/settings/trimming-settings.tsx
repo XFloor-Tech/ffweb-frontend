@@ -1,26 +1,30 @@
-import { useEffect, useState, type FC } from "react";
+import { useEffect, type FC } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useConversionStore } from "@/store/conversion-store";
+import { useFileStore } from "@/store/file-store";
 
 import { Switch } from "../ui/switch";
+import { useSelectedFileDurationMs } from "./hooks";
 import {
   formatTrimTimeForInput,
   msToTrimDisplay,
+  normalizeTrimRange,
   normalizeTrimTimeInput,
   parseTrimTimeToMs,
 } from "./utils";
 
-const MAX_DURATION_MS = 300_000;
+const MIN_TRIM_SEGMENT_MS = 1000;
 
 type Props = {
   className?: string;
 };
 
 const TrimmingSettings: FC<Props> = ({ className }) => {
+  const selectedFile = useFileStore((state) => state.selectedFile);
   const {
     enableTrim,
     startTime,
@@ -30,44 +34,92 @@ const TrimmingSettings: FC<Props> = ({ className }) => {
     setEndTime,
   } = useConversionStore();
 
-  const [sliderRange, setSliderRange] = useState<[number, number]>([0, 0]);
+  const { durationMs: fileDurationMs, isLoading: isDurationLoading } =
+    useSelectedFileDurationMs(selectedFile);
+
+  const hasSelectedFile = !!selectedFile;
+  const isDurationReady =
+    typeof fileDurationMs === "number" && fileDurationMs > 0;
+  const isTrimmingAvailable = hasSelectedFile && isDurationReady;
+
+  const maxDurationMs = isDurationReady ? fileDurationMs : 0;
+  const parsedStartMs = parseTrimTimeToMs(startTime);
+  const parsedEndMs = parseTrimTimeToMs(endTime);
+  const normalizedRange = normalizeTrimRange({
+    startMs: parsedStartMs,
+    endMs: parsedEndMs,
+    maxDurationMs,
+    minSegmentMs: MIN_TRIM_SEGMENT_MS,
+  });
 
   useEffect(() => {
-    const startMs = parseTrimTimeToMs(startTime);
-    const endMs = parseTrimTimeToMs(endTime);
-
-    const validEndMs = endMs > startMs ? endMs : startMs + 1000;
-    if (endMs <= startMs) {
-      setEndTime(msToTrimDisplay(validEndMs));
+    if (isTrimmingAvailable || !enableTrim) {
+      return;
     }
 
-    // TODO: handle outside of use effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- later.
-    setSliderRange([startMs, validEndMs]);
-  }, [endTime, setEndTime, startTime]);
+    setEnableTrim(false);
+  }, [enableTrim, isTrimmingAvailable, setEnableTrim]);
+
+  useEffect(() => {
+    if (!isTrimmingAvailable) {
+      return;
+    }
+
+    const nextStartTime = msToTrimDisplay(normalizedRange.startMs);
+    const nextEndTime = msToTrimDisplay(normalizedRange.endMs);
+
+    if (startTime !== nextStartTime) {
+      setStartTime(nextStartTime);
+    }
+
+    if (endTime !== nextEndTime) {
+      setEndTime(nextEndTime);
+    }
+  }, [
+    endTime,
+    isTrimmingAvailable,
+    normalizedRange.endMs,
+    normalizedRange.startMs,
+    setEndTime,
+    setStartTime,
+    startTime,
+  ]);
+
+  const updateTrimRange = (nextStartMs: number, nextEndMs: number) => {
+    if (!isTrimmingAvailable) {
+      return;
+    }
+
+    const nextRange = normalizeTrimRange({
+      startMs: nextStartMs,
+      endMs: nextEndMs,
+      maxDurationMs,
+      minSegmentMs: MIN_TRIM_SEGMENT_MS,
+    });
+
+    setStartTime(msToTrimDisplay(nextRange.startMs));
+    setEndTime(msToTrimDisplay(nextRange.endMs));
+  };
 
   const handleSliderChange = (value: number[]) => {
-    if (value.length === 2) {
-      const [newStart, newEnd] = value;
-
-      if (newStart < newEnd) {
-        setStartTime(msToTrimDisplay(newStart));
-        setEndTime(msToTrimDisplay(newEnd));
-      } else if (newStart >= newEnd) {
-        setStartTime(msToTrimDisplay(newStart));
-        setEndTime(msToTrimDisplay(newStart + 1000));
-      }
+    if (value.length !== 2) {
+      return;
     }
+
+    const [newStartMs, newEndMs] = value;
+    updateTrimRange(newStartMs, newEndMs);
   };
 
   const handleTimeInputChange = (type: "start" | "end", value: string) => {
     const formatted = normalizeTrimTimeInput(value);
+    const nextMs = parseTrimTimeToMs(formatted);
 
     if (type === "start") {
-      setStartTime(formatted);
-    } else {
-      setEndTime(formatted);
+      updateTrimRange(nextMs, parsedEndMs);
+      return;
     }
+
+    updateTrimRange(parsedStartMs, nextMs);
   };
 
   return (
@@ -75,35 +127,56 @@ const TrimmingSettings: FC<Props> = ({ className }) => {
       <div className="flex items-center gap-3">
         <Switch
           id="trim-enable"
-          checked={enableTrim}
+          checked={isTrimmingAvailable && enableTrim}
           onCheckedChange={(checked) => setEnableTrim(!!checked)}
+          disabled={!isTrimmingAvailable}
         />
 
         <Label
           htmlFor="trim-enable"
-          className="cursor-pointer text-small font-medium text-nowrap"
+          className={cn(
+            "text-small font-medium text-nowrap",
+            isTrimmingAvailable
+              ? "cursor-pointer"
+              : "cursor-not-allowed text-gray-400",
+          )}
         >
           Trim:
         </Label>
       </div>
 
-      {enableTrim && (
+      {!hasSelectedFile && (
+        <span className="text-xs text-gray-400">
+          Select a file first to enable trimming options.
+        </span>
+      )}
+
+      {hasSelectedFile && isDurationLoading && (
+        <span className="text-xs text-gray-400">Reading file duration...</span>
+      )}
+
+      {hasSelectedFile && !isDurationLoading && !isDurationReady && (
+        <span className="text-xs text-gray-400">
+          Couldn&apos;t read this file duration, so trimming is unavailable.
+        </span>
+      )}
+
+      {enableTrim && isTrimmingAvailable && (
         <>
-          {/* Visual Slider */}
           <div className="py-4">
             <Slider
-              value={[sliderRange[0], sliderRange[1]]}
+              value={[normalizedRange.startMs, normalizedRange.endMs]}
               onValueChange={handleSliderChange}
               min={0}
-              max={MAX_DURATION_MS}
+              max={maxDurationMs}
               step={100}
               className="w-full"
             />
 
             <div className="mt-2 flex justify-between text-xs text-gray-500">
               <span>{msToTrimDisplay(0)}</span>
-              <span>{msToTrimDisplay(MAX_DURATION_MS / 2)}</span>
-              <span>{msToTrimDisplay(MAX_DURATION_MS)}</span>
+              <span>{msToTrimDisplay(Math.floor(maxDurationMs / 2))}</span>
+              <span>{msToTrimDisplay(maxDurationMs)}</span>
             </div>
           </div>
 
@@ -114,8 +187,8 @@ const TrimmingSettings: FC<Props> = ({ className }) => {
                   id="start-time"
                   type="text"
                   value={formatTrimTimeForInput(startTime)}
-                  onChange={(e) =>
-                    handleTimeInputChange("start", e.target.value)
+                  onChange={(event) =>
+                    handleTimeInputChange("start", event.target.value)
                   }
                   placeholder="00:05:517"
                   className="hover:bg-gray-750 h-9 w-30 border-gray-700 bg-gray-800 text-start font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
@@ -133,7 +206,9 @@ const TrimmingSettings: FC<Props> = ({ className }) => {
                   id="end-time"
                   type="text"
                   value={formatTrimTimeForInput(endTime)}
-                  onChange={(e) => handleTimeInputChange("end", e.target.value)}
+                  onChange={(event) =>
+                    handleTimeInputChange("end", event.target.value)
+                  }
                   placeholder="01:25:120"
                   className="hover:bg-gray-750 h-9 w-30 border-gray-700 bg-gray-800 text-start font-mono text-white placeholder:text-gray-500 hover:border-gray-600"
                 />

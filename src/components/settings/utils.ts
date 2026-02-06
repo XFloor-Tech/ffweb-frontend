@@ -97,10 +97,57 @@ const formatTrimTimeForInput = (timeStr: string): string => {
   return msToTrimDisplay(ms);
 };
 
+const clampMs = (value: number, min: number, max: number) => {
+  return Math.min(max, Math.max(min, value));
+};
+
+const normalizeTrimRange = ({
+  startMs,
+  endMs,
+  maxDurationMs,
+  minSegmentMs,
+}: {
+  startMs: number;
+  endMs: number;
+  maxDurationMs: number;
+  minSegmentMs: number;
+}) => {
+  const safeMaxDurationMs = Math.max(0, Math.floor(maxDurationMs));
+  if (safeMaxDurationMs === 0) {
+    return { startMs: 0, endMs: 0 };
+  }
+
+  const safeMinSegmentMs = Math.max(
+    0,
+    Math.min(Math.floor(minSegmentMs), safeMaxDurationMs),
+  );
+
+  let nextStartMs = clampMs(Math.floor(startMs), 0, safeMaxDurationMs);
+  let nextEndMs = clampMs(Math.floor(endMs), 0, safeMaxDurationMs);
+
+  if (nextEndMs < nextStartMs) {
+    nextEndMs = Math.min(safeMaxDurationMs, nextStartMs + safeMinSegmentMs);
+  }
+
+  if (nextEndMs - nextStartMs < safeMinSegmentMs) {
+    if (nextStartMs + safeMinSegmentMs <= safeMaxDurationMs) {
+      nextEndMs = nextStartMs + safeMinSegmentMs;
+    } else {
+      nextEndMs = safeMaxDurationMs;
+      nextStartMs = Math.max(0, nextEndMs - safeMinSegmentMs);
+    }
+  }
+
+  return {
+    startMs: nextStartMs,
+    endMs: nextEndMs,
+  };
+};
+
 export {
   formatTrimTimeForInput,
   msToTrimDisplay,
+  normalizeTrimRange,
   normalizeTrimTimeInput,
   parseTrimTimeToMs,
 };
-
