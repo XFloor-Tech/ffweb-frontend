@@ -109,7 +109,7 @@ export function AdvancedSettings() {
         />
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <Switch
                 id="enable-normalize"
@@ -119,7 +119,7 @@ export function AdvancedSettings() {
 
               <Label
                 htmlFor="enable-normalize"
-                className="text-small font-medium text-nowrap"
+                className="cursor-pointer text-small font-medium text-nowrap"
               >
                 Normalize Max Peak to:
               </Label>

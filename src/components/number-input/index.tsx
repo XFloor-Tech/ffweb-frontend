@@ -10,6 +10,7 @@ import {
 
 import { MinusIcon, PlusIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -275,31 +276,29 @@ const NumberInput: FC<Props> = ({
       )}
 
       <div className="absolute inset-y-0 right-2 flex items-center gap-1">
-        <button
+        <Button
           type="button"
-          className={cn(
-            "text-text inline-flex size-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
-          )}
+          variant="number"
+          size="icon-sm"
           onMouseDown={(event) => event.preventDefault()}
           onClick={decrement}
           disabled={!canDecrement}
           aria-label="Decrement"
         >
           <MinusIcon className="size-4" />
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
-          className={cn(
-            "text-text inline-flex size-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
-          )}
+          variant="number"
+          size="icon-sm"
           onMouseDown={(event) => event.preventDefault()}
           onClick={increment}
           disabled={!canIncrement}
           aria-label="Increment"
         >
           <PlusIcon className="size-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );
