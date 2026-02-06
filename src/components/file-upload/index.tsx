@@ -271,23 +271,32 @@ const FileUpload: FC<Props> = () => {
           </>
         )}
 
-        {!isTaskCompleted && getFalsyTaskStatus(taskStatus) && (
-          <>
-            <Button
-              disabled={isTaskStatusPending}
-              onClick={handleRetry}
-              variant="secondary"
-            >
-              {isTaskStatusPending
-                ? BUTTON_LABELS.retrying
-                : BUTTON_LABELS.retry}
-            </Button>
+        {!isTaskCompleted &&
+          (getFalsyTaskStatus(taskStatus) || (!taskStatus && selectedFile)) && (
+            <>
+              {getFalsyTaskStatus(taskStatus) && (
+                <Button
+                  disabled={isTaskStatusPending}
+                  onClick={handleRetry}
+                  variant="secondary"
+                >
+                  {isTaskStatusPending
+                    ? BUTTON_LABELS.retrying
+                    : BUTTON_LABELS.retry}
+                </Button>
+              )}
 
-            <Button onClick={resetFlow} disabled={isTaskStatusPending}>
-              {BUTTON_LABELS.convertMore}
-            </Button>
-          </>
-        )}
+              {!isUploading && (
+                <Button
+                  onClick={resetFlow}
+                  variant={taskStatus ? "default" : "secondary"}
+                  disabled={isTaskStatusPending}
+                >
+                  {BUTTON_LABELS.convertMore}
+                </Button>
+              )}
+            </>
+          )}
 
         {!isTaskCompleted && !getFalsyTaskStatus(taskStatus) && (
           <Button
