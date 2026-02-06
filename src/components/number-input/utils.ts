@@ -4,6 +4,8 @@ type ParseResult =
   | { kind: "invalid" }
   | { kind: "number"; value: number };
 
+const MAX_FORMAT_DECIMALS = 12;
+
 const clampNumber = (value: number, min?: number, max?: number) => {
   let clamped = value;
 
@@ -18,8 +20,58 @@ const clampNumber = (value: number, min?: number, max?: number) => {
   return clamped;
 };
 
-const formatNumber = (value?: number | null) =>
-  typeof value === "number" && Number.isFinite(value) ? String(value) : "";
+const countDecimalPlaces = (value: number) => {
+  if (!Number.isFinite(value)) return 0;
+
+  const stringValue = value.toString().toLowerCase();
+
+  if (!stringValue.includes("e")) {
+    const [, fraction = ""] = stringValue.split(".");
+    return fraction.length;
+  }
+
+  const [basePart, exponentPart] = stringValue.split("e");
+  const exponent = Number.parseInt(exponentPart ?? "0", 10);
+  const [, baseFraction = ""] = basePart.split(".");
+
+  return Math.max(0, baseFraction.length - exponent);
+};
+
+const normalizeStepResult = (value: number, step: number) => {
+  if (!Number.isFinite(value)) return value;
+
+  const precision = Math.max(0, countDecimalPlaces(step));
+  if (precision === 0) return Math.round(value);
+
+  return Number(value.toFixed(precision));
+};
+
+const isTextAllowedForStep = (raw: string, step: number) => {
+  const precision = Math.max(0, countDecimalPlaces(step));
+  const unsigned = raw.replace(/^[-+]/, "");
+  const [integerPart = "", fractionalPart] = unsigned.split(".");
+
+  if (integerPart.length > 1 && integerPart.startsWith("0")) {
+    return false;
+  }
+
+  if (precision === 0 && raw.includes(".")) {
+    return false;
+  }
+
+  if (fractionalPart !== undefined && fractionalPart.length > precision) {
+    return false;
+  }
+
+  return true;
+};
+
+const formatNumber = (value?: number | null) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "";
+
+  const normalized = Number(value.toFixed(MAX_FORMAT_DECIMALS));
+  return String(normalized);
+};
 
 const sanitizeNumberText = (raw: string) => {
   const allowed = raw.replace(/[^\d.+-]/g, "");
@@ -66,4 +118,11 @@ const parseNumberInput = (raw: string): ParseResult => {
   return { kind: "number", value };
 };
 
-export { clampNumber, formatNumber, parseNumberInput, sanitizeNumberText };
+export {
+  clampNumber,
+  formatNumber,
+  isTextAllowedForStep,
+  normalizeStepResult,
+  parseNumberInput,
+  sanitizeNumberText,
+};

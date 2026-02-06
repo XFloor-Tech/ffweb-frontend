@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,8 +9,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   BIT_DEPTH_OPTIONS,
+  GAIN_DB_LIMITS,
   LOSELESS_CODECS,
   METADATA_OPTIONS,
+  NORMALIZE_PEAK_DB_LIMITS,
 } from "@/constants/conversion-constants";
 import { useConversionStore } from "@/store/conversion-store";
 import type { BitDepth, Metadata } from "@/types/conversion-types";
@@ -100,11 +101,11 @@ export function AdvancedSettings() {
             }
           }}
           className="hover:bg-gray-750 w-full border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 hover:border-gray-600"
-          placeholder="0db"
+          placeholder="0"
           label="Gain"
           postElement="db"
-          min={-7}
-          max={10}
+          min={GAIN_DB_LIMITS.MIN}
+          max={GAIN_DB_LIMITS.MAX}
         />
 
         <div className="space-y-3">
@@ -124,18 +125,16 @@ export function AdvancedSettings() {
               </Label>
             </div>
 
-            <Input
-              type="text"
-              value={enableNormalizePeak ? `${normalizePeak}db` : ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                const numValue = parseFloat(value.replace(/[^0-9.-]+/g, ""));
-                if (!isNaN(numValue)) {
-                  setNormalizePeak(numValue);
-                }
-              }}
-              className="hover:bg-gray-750 h-9 w-full border-gray-700 bg-gray-800 text-start text-white placeholder:text-gray-500 hover:border-gray-600"
-              placeholder="-7db"
+            <NumberInput
+              id="normalize-peak"
+              value={normalizePeak}
+              onValueChange={setNormalizePeak}
+              className="hover:bg-gray-750 h-9 w-full border-gray-700 bg-gray-800 pt-2.5 pb-2.5 text-start text-white placeholder:text-gray-500 hover:border-gray-600"
+              placeholder="0"
+              postElement="db"
+              min={NORMALIZE_PEAK_DB_LIMITS.MIN}
+              max={NORMALIZE_PEAK_DB_LIMITS.MAX}
+              step={0.1}
               disabled={!enableNormalizePeak}
             />
           </div>
