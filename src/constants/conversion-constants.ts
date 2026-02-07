@@ -17,6 +17,16 @@ type DefaultSettings = ConversionSettings & {
   enableNormalizePeak: boolean;
 };
 
+export const GAIN_DB_LIMITS = {
+  MIN: -7,
+  MAX: 10,
+} as const;
+
+export const NORMALIZE_PEAK_DB_LIMITS = {
+  MIN: -9,
+  MAX: 0,
+} as const;
+
 // Available options
 export const CODEC_OPTIONS = [
   { value: "AAC", label: "AAC" },
@@ -28,6 +38,12 @@ export const CODEC_OPTIONS = [
   { value: "OPUS", label: "OPUS" },
   { value: "M4A", label: "M4A" },
 ] as const satisfies ReadonlyArray<SelectOption<Codec>>;
+
+export const LOSELESS_CODECS = [
+  "WAV",
+  "AIFF",
+  "FLAC",
+] as const satisfies ReadonlyArray<Codec>;
 
 export const BITRATE_OPTIONS = [
   { value: "64k", label: "64 kbps" },
@@ -72,7 +88,7 @@ export const DEFAULT_SETTINGS = {
   bitDepth: "32",
   metadata: "Preserve",
   gain: 0,
-  normalizePeak: -7, // TODO: check what allowed values are.
+  normalizePeak: -7,
   enableNormalizePeak: false,
   enableTrim: false,
   useCustomStart: true,
