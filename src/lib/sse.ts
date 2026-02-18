@@ -17,7 +17,9 @@ const resolveSseUrl = (url: string) => {
   if (isAbsoluteUrl(url) || !API_BASE_URL) return url;
 
   try {
-    return new URL(url, API_BASE_URL).toString();
+    const urlWithoutHeadSlash = url.slice(1);
+
+    return new URL(urlWithoutHeadSlash, API_BASE_URL).toString();
   } catch {
     const normalizedBase = API_BASE_URL.endsWith("/")
       ? API_BASE_URL.slice(0, -1)
