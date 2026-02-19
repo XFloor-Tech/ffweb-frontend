@@ -2,12 +2,19 @@ import type { FC } from "react";
 
 import { FileUpload } from "@/components/file-upload";
 import { ConversionSettings } from "@/components/settings/conversion-settings";
+import { UPLOAD_CONTENT_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { cn } from "@/lib/utils";
 
 type Props = Record<string, never>;
 
 const UploadPage: FC<Props> = () => {
   return (
-    <div className="flex gap-4">
+    <div
+      className={cn(
+        UPLOAD_CONTENT_MAX_WIDTH_CLASS,
+        "flex w-full justify-center gap-4",
+      )}
+    >
       <section className="min-h-screen w-full 4xl:max-w-[960px]">
         <FileUpload />
       </section>

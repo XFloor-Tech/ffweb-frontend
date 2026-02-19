@@ -1,4 +1,4 @@
-import { mutationOptions, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { ALERT_TEXT } from "@/constants/alert";
@@ -6,8 +6,8 @@ import { API_ENDPOINTS } from "@/constants/api";
 import { TaskStatus as TaskStatusMap } from "@/constants/file-constants";
 import { apiRequest } from "@/lib/api-client";
 import {
-  downloadBlob,
   parseFilenameFromContentDisposition,
+  useDownloadBlob,
 } from "@/lib/download";
 
 import { useFileStore } from "@/store/file-store";
@@ -148,8 +148,10 @@ type DownloadPayload = {
   taskId: string;
 };
 
-const downloadMutationOptions = () =>
-  mutationOptions({
+const useDownloadMutation = () => {
+  const downloadBlob = useDownloadBlob();
+
+  return useMutation({
     mutationKey: uploadQueryKeys.download(),
     mutationFn: async ({ taskId }: DownloadPayload) => {
       const [data, error, headers] = await apiRequest<Blob>({
@@ -177,10 +179,10 @@ const downloadMutationOptions = () =>
       toast.error(ALERT_TEXT.fileUpload.downloadFailedToast);
     },
   });
-
+};
 export {
-  downloadMutationOptions,
   getTaskStatus,
+  useDownloadMutation,
   useGetTaskStatusMutation,
   useUploadMutation,
 };

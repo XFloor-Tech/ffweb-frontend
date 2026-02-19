@@ -1,6 +1,5 @@
 import { useEffect, type FC } from "react";
 
-import { useMutation } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,7 +27,7 @@ import {
 } from "@/utils/file-status";
 import { ConversionSettings } from "../settings/conversion-settings";
 import {
-  downloadMutationOptions,
+  useDownloadMutation,
   useGetTaskStatusMutation,
   useUploadMutation,
 } from "./queries";
@@ -67,9 +66,7 @@ const FileUpload: FC<Props> = () => {
   const { mutate: getTaskStatus, isPending: isTaskStatusPending } =
     useGetTaskStatusMutation();
 
-  const { mutate: download, isPending: isDownloading } = useMutation(
-    downloadMutationOptions(),
-  );
+  const { mutate: download, isPending: isDownloading } = useDownloadMutation();
 
   const outputFormat = conversionSettings.codec.toLowerCase();
   const quality = getQualityFromBitrate(conversionSettings.bitrate);
@@ -244,7 +241,7 @@ const FileUpload: FC<Props> = () => {
           <Dialog>
             <DialogTrigger asChild>
               <Button className="gap-2" variant="secondary">
-                <Settings className="size-4" />
+                <Settings className="hidden size-4 sm:block" />
                 Settings
               </Button>
             </DialogTrigger>

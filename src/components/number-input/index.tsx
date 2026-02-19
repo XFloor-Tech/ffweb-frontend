@@ -62,7 +62,7 @@ const NumberInput: FC<NumberInputProps> = ({
   return (
     <div className="relative">
       {label && (
-        <span className="pointer-events-none absolute top-2 left-3 text-mini text-primary select-none">
+        <span className="pointer-events-none absolute top-2 left-4 text-mini text-primary select-none">
           {label}
         </span>
       )}
